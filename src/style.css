@@ -726,7 +726,10 @@ input[type='checkbox'] {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
   gap: clamp(1rem, 3vw, 3rem);
-  align-items: end;
+  /* Start, not end: with end alignment the heading dropped whenever its side
+     note ran to four lines instead of three, so the same element sat 36px lower
+     in one section than in the other four. */
+  align-items: start;
   margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
 }
 
@@ -741,13 +744,14 @@ input[type='checkbox'] {
   margin: 0;
 }
 
+/* A subheading names a step, so it reads as a sentence. Uppercase tracked mono
+   stays for the chrome — fig numbers, control names, table headers — where the
+   short string is a label rather than something you read. */
 .subheading {
   font-family: var(--mono);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--text);
   margin: 0 0 1rem;
 }
 
@@ -930,7 +934,9 @@ input[type='checkbox'] {
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  font-size: 0.625rem;
+  /* 10px uppercase mono was the smallest type on the page and the one label a
+     reader has to decode first. 11px is the floor everywhere else. */
+  font-size: 0.6875rem;
   color: var(--text-dim);
   padding: 0 0 0.6rem;
   border-bottom: 1px solid var(--rule);
@@ -1256,13 +1262,14 @@ input[type='checkbox'] {
   color: var(--text-dim);
 }
 
+/* The one sentence in the panel that is a question to the reader, so it is set
+   to be read: sentence case, no tracking, at body-caption size. */
 .guess-ask {
   margin: 0.75rem 0 0;
   font-family: var(--mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 0.8125rem;
   color: var(--text-dim);
+  max-width: 46ch;
 }
 
 .guess-choices {
@@ -1272,17 +1279,18 @@ input[type='checkbox'] {
   margin-top: 1rem;
 }
 
+/* Actions carry a number, and a number in caps is harder to compare with the
+   table below it. Sentence case, tabular figures, same hairline box. */
 .guess-choice,
 .guess-next {
   font-family: var(--mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 0.75rem;
   color: var(--text);
   background: transparent;
   border: 1px solid var(--rule);
   padding: 0.6rem 0.9rem;
   cursor: pointer;
+  font-variant-numeric: tabular-nums;
   transition: border-color 0.18s ease, color 0.18s ease;
 }
 
@@ -1376,14 +1384,14 @@ input[type='checkbox'] {
   align-self: start;
 }
 
-.method-assumes {
-  color: var(--text-dim);
-  font-size: 0.75rem;
-  line-height: 1.4;
-}
-
 #method-failures {
   margin-top: 1rem;
+}
+
+/* The reconstruct controls follow the two-pass paragraph in section 4; without a
+   gap of their own they touched the last line of the prose above them. */
+#reconstruct-grid {
+  margin-top: 1.75rem;
 }
 
 @media (max-width: 62rem) {

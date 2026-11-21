@@ -624,3 +624,84 @@ new "assumes" column is paired with a paragraph naming what each method gets wro
 - There is still no switch that turns the gradient test off, so the zipper artefact the copy
   names cannot be produced on demand.
 
+---
+
+## Phase 7: a design review against the slop checklist
+
+Run with the method from [unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky
+(CC BY 4.0): audit the screen against the usual tells, write the direction in five lines,
+then fix one layer at a time in a fixed order. I used the audit, direction and passes; I did
+not use its image-generation or story-video parts, because this page may not make a network
+request and has no photograph to buy.
+
+### Direction (unchanged from Phase 4, which is the point of writing it down)
+
+- **Product.** A lab bench that runs a camera sensor's signal path in the browser, so a
+  visitor can see the numbers a photograph is made from.
+- **Character.** Exact, dark, instrument-like.
+- **World.** A darkroom contact sheet crossed with a lab instrument: safelight amber on
+  near-black, hairline rules, mono readouts.
+- **Moments.** The mosaic against the developed photograph (fig. 01), and the exploded
+  sensor whose dots are electrons this frame actually collected (fig. 02).
+- **Signature.** Every figure carries a `fig. NN` margin mark and a corner registration
+  bracket, and every number is mono with tabular figures.
+
+### Audit, one line per sign, with where it lived
+
+1. `.section-head { align-items: end }` made a heading's height depend on how many lines its
+   side note had: measured fig.y - heading.y = 2px in four sections and 38px in section 4.
+   Same element, two positions.
+2. 38 uppercase tracked strings. Most are chrome and belong (fig numbers, control names);
+   two were sentences being read in caps: the panel question at 11px/0.06em and the
+   procedure heading at 12px/0.12em.
+3. Buttons carrying numbers ("ALONG THE ROW MEAN 1,774") set in caps, directly above a table
+   of the same numbers in sentence case.
+4. `#method-table thead th` at 10px, the smallest type on the page.
+5. The `assumes` column added in Phase 6 wrapped each cell to three and four lines and
+   turned a three-number comparison into a wall: 384px was not wide enough for four columns.
+6. `#reconstruct-grid` sat hard against the last line of the paragraph above it.
+7. One caption started lowercase while every other instruction started capitalised.
+8. `motion.settle()` was exported and never called: dead animation machinery.
+9. Colour, icons, radii, shadows, gradients, motion loops: clean. One gradient exists and it
+   is the error-map scale; one shadow exists and it is a 1px ring.
+
+### Passes, in the order they were run
+
+- **Spacing.** `align-items: start` on the section head, so all five heads now sit at
+  fig.y - heading.y = 8px exactly. `#reconstruct-grid` got 28px of its own.
+- **Colour.** Nothing to change.
+- **Icons.** None on the page.
+- **Copy.** "Drag to wipe" capitalised; "Along the row", "Along the column", "Another site"
+  moved from caps to sentence case.
+- **Type.** `.guess-ask` and `.subheading` became sentence-case mono at 13px with no
+  tracking, because both are sentences and uppercase mono is a label voice, not a reading
+  one. Table headers went 10px to 11px. Caps dropped from 38 strings to 32.
+- **Layout.** The `assumes` column came out of the table; the assumption each method rests on
+  now lives in the paragraph under it ("nearest neighbour assumes a neighbour is close
+  enough, so its edges zip"), where a sentence has room to be a sentence.
+- **Details.** `.method-assumes` and the `ASSUMES` map deleted rather than left unused.
+- **Visuals.** Nothing to change: the page's two moments are the product itself.
+- **Motion.** `motion.settle` is now wired to the frame that carries the scores, so the
+  numbers settle once per interaction burst instead of pulsing on every dragged frame.
+
+### What was not changed, and why
+
+The uppercase mono label voice stays. Unslop lists "uppercase tracked labels" among the
+tells, and for a marketing page it is right. Here the caps are the instrument's own chrome -
+`FIG. 04`, `MID-GREY SNR`, `CLIPPED` - and the brief for this page asks for margin
+annotations in the manner of lab notes. What the audit actually caught was caps used for
+*sentences*; that is what changed. The distinction is the one the checklist is making: a
+label is a short string you scan, a sentence is something you read.
+
+### Measured after the passes
+
+- Five sections, one rhythm: fig.y - heading.y = 8px in all of them (was 2, 2, 2, 38, 2).
+- Uppercase strings 38 -> 32, and none of them is a sentence.
+- `npm test` 69 passed; `npm run build` 173 kB entry (65 kB gzip).
+- Frame cost in the browser on this machine: 396-459 ms during this session, against
+  167-231 ms when Phase 5 was measured, while `scripts/report.mjs` in Node reports 201-227 ms
+  for the same work. The machine was carrying two dev servers and a dozen headless browser
+  runs; the number moves with load, and the drag path still skips metrics so dragging stays
+  responsive. Worth re-measuring on a quiet machine before quoting it.
+
+

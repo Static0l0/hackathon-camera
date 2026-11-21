@@ -304,6 +304,14 @@ const client = createEngineClient({
     bayer.update(frame.coverage);
     heatmap.update(frame);
 
+    // Numbers settle only when the scores arrive. During a drag the frame is
+    // computed without metrics, so a settle on every frame would flicker; this
+    // fires once per burst, on the frame that carries the real scores.
+    if (frame.metrics.psnr !== null) {
+      motion.settle(elements.readoutsGrid);
+      motion.settle(elements.photonsReadout);
+    }
+
     elements.computeNote.textContent =
       `computed in your browser, ${Math.round(frame.ms)} ms — ${frame.width}×${frame.height} pixels, ` +
       'nothing leaves this page';

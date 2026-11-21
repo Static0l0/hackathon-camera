@@ -47,10 +47,10 @@ export function createGuessDemo({ root, onNext }) {
   const scores = el('dl', 'guess-scores');
   const next = el('button', 'guess-next');
   next.type = 'button';
-  next.textContent = 'another site';
+  next.textContent = 'Another site';
 
-  const rowButton = directionButton('along the row', 'horizontal');
-  const columnButton = directionButton('along the column', 'vertical');
+  const rowButton = directionButton('Along the row', 'horizontal');
+  const columnButton = directionButton('Along the column', 'vertical');
   choices.append(rowButton.root, columnButton.root);
 
   reveal.append(scores, verdict);

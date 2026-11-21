@@ -18,3 +18,4 @@ Thumbs.db
 
 # chromium's own log from the headless screenshot runs
 .edge.log
+shot-*.json
