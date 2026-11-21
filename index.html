@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Mosaic — what your camera never recorded</title>
+    <meta
+      name="description"
+      content="An interactive explainer: every pixel of a colour photograph measured one colour, in very few photons. The other two were invented by software. Watch it happen, in your browser."
+    />
+    <meta name="theme-color" content="#0c0c0b" />
+    <!-- The only icon in the project: four sensor sites, inline so it costs no request. -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230c0c0b'/%3E%3Crect x='2' y='2' width='6' height='6' fill='%23d6452f'/%3E%3Crect x='8' y='2' width='6' height='6' fill='%234c9a52'/%3E%3Crect x='2' y='8' width='6' height='6' fill='%234c9a52'/%3E%3Crect x='8' y='8' width='6' height='6' fill='%233566c9'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">skip to the explanation</a>
+    <div class="sheet" id="app">
+      <header class="masthead">
+        <p class="eyebrow">
+          <span>unveiling technology</span>
+          <span class="eyebrow-rule" aria-hidden="true"></span>
+          <span>fig. 0</span>
+        </p>
+        <h1 class="display" data-reveal>
+          Your camera never<br />recorded a colour photo.
+        </h1>
+        <p class="lede" data-reveal>
+          Every pixel saw one colour, in very few photons.<br />
+          Software invented the rest.
+        </p>
+      </header>
+
+      <main id="main">
+        <!-- ─────────────────────────────  01  the hook  ───────────────────────────── -->
+        <section class="section" id="hook" aria-labelledby="hook-title">
+          <div class="section-margin">
+            <span class="fig">fig. 01</span>
+            <span class="tick" aria-hidden="true"></span>
+          </div>
+
+          <div class="section-body">
+            <div class="section-head">
+              <h2 class="heading" id="hook-title" data-reveal>What the sensor kept</h2>
+              <p class="note">
+                Left: the only numbers that ever existed. Right: the photograph
+                you would have been shown.
+              </p>
+            </div>
+
+            <div class="viewer" id="viewer">
+              <div class="viewer-canvas" id="viewer-canvas">
+                <canvas id="canvas-mosaic" aria-hidden="true"></canvas>
+                <canvas id="canvas-developed" aria-hidden="true"></canvas>
+                <div class="divider" id="divider" role="slider" tabindex="0"
+                     aria-label="Divider between the raw sensor data and the developed photograph"
+                     aria-valuemin="2" aria-valuemax="98" aria-valuenow="50">
+                  <span class="divider-line" aria-hidden="true"></span>
+                  <span class="divider-grip" aria-hidden="true"></span>
+                </div>
+                <span class="viewer-tag viewer-tag-left">sensor</span>
+                <span class="viewer-tag viewer-tag-right">developed</span>
+              </div>
+
+              <div class="loupe" id="loupe" hidden>
+                <canvas id="loupe-canvas" width="154" height="154"></canvas>
+                <p class="loupe-caption" id="loupe-caption"></p>
+              </div>
+            </div>
+
+            <p class="viewer-status" id="viewer-status" role="status">
+              drag to wipe · click a pixel to see what the algorithm did there
+            </p>
+          </div>
+        </section>
+
+        <!-- ───────────────────────────  02  the photons  ─────────────────────────── -->
+        <section class="section" id="photons" aria-labelledby="photons-title">
+          <div class="section-margin">
+            <span class="fig">fig. 02</span>
+            <span class="tick" aria-hidden="true"></span>
+          </div>
+
+          <div class="section-body">
+            <div class="section-head">
+              <h2 class="heading" id="photons-title" data-reveal>One pixel is four layers deep</h2>
+              <p class="note">
+                Scroll to separate them. Every dot is an electron this frame
+                actually collected — not an illustration of the idea.
+              </p>
+            </div>
+
+            <div class="stack-stage" id="stack-stage">
+              <canvas id="stack-canvas"></canvas>
+            </div>
+
+            <ol class="stack-legend">
+              <li><span class="stack-index">01</span><span class="stack-name">microlens</span> gathers light onto the diode</li>
+              <li><span class="stack-index">02</span><span class="stack-name">colour filter</span> passes one colour, blocks two</li>
+              <li><span class="stack-index">03</span><span class="stack-name">photodiode</span> counts the electrons</li>
+              <li><span class="stack-index">04</span><span class="stack-name">circuitry</span> reads the count out</li>
+            </ol>
+
+            <p class="stack-readout" id="stack-readout" role="status"></p>
+
+            <div class="capture">
+              <div class="capture-controls" id="capture-grid"></div>
+              <dl class="capture-readout" id="photons-readout" aria-live="polite"></dl>
+            </div>
+
+            <p class="aside">
+              ISO does not add light. It multiplies what the diode already
+              counted — signal and noise together, by the same number.
+            </p>
+          </div>
+        </section>
+
+        <!-- ──────────────────────  03  one colour per pixel  ─────────────────────── -->
+        <section class="section" id="pattern" aria-labelledby="pattern-title">
+          <div class="section-margin">
+            <span class="fig">fig. 03</span>
+            <span class="tick" aria-hidden="true"></span>
+          </div>
+
+          <div class="section-body">
+            <div class="section-head">
+              <h2 class="heading" id="pattern-title" data-reveal>One colour per pixel</h2>
+              <p class="note">
+                A colour filter sits over every photosite. Each one passes a
+                single band of light and blocks the rest.
+              </p>
+            </div>
+
+            <div class="pattern">
+              <figure class="pattern-figure">
+                <canvas id="bayer-canvas" width="360" height="360" aria-hidden="true"></canvas>
+                <figcaption class="pattern-caption" id="bayer-caption"></figcaption>
+              </figure>
+
+              <div class="pattern-copy">
+                <p>
+                  The pattern repeats every two pixels in both directions. Two of
+                  the four sites are green because the eye is most sensitive to
+                  green, and green is where most of the detail lives.
+                </p>
+                <dl class="pattern-counts" id="pattern-counts" aria-live="polite"></dl>
+                <p class="aside">
+                  Blue never sees red. Red never sees blue. The empty half of
+                  every pixel is what the next section has to invent.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─────────────────────────  04  the guess  ─────────────────────────────── -->
+        <section class="section" id="guess" aria-labelledby="guess-title">
+          <div class="section-margin">
+            <span class="fig">fig. 04</span>
+            <span class="tick" aria-hidden="true"></span>
+          </div>
+
+          <div class="section-body">
+            <div class="section-head">
+              <h2 class="heading" id="guess-title" data-reveal>The guess</h2>
+              <p class="note">
+                Four algorithms, one mosaic. Switch between them: the picture is
+                recomputed, never cross-faded from a stored result.
+              </p>
+            </div>
+
+            <div class="reconstruct-controls" id="reconstruct-grid"></div>
+
+            <div class="guess">
+              <figure class="guess-figure">
+                <canvas id="error-canvas" width="384" height="216" aria-hidden="true"></canvas>
+                <figcaption class="guess-caption">
+                  <span class="guess-swatch" aria-hidden="true"></span>
+                  <span id="error-caption">where the reconstruction is wrong, in 8-bit levels</span>
+                </figcaption>
+                <p class="guess-hint">
+                  On this photograph the error is mostly shot noise, so it looks
+                  flat — every method is close. Switch the scene to the zone
+                  plate: fine detail is where the algorithms disagree.
+                </p>
+              </figure>
+
+              <div class="method-panel">
+                <table class="method-table">
+                  <caption class="visually-hidden">
+                    Reconstruction quality per demosaic method at the current settings
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">method</th>
+                      <th scope="col">PSNR</th>
+                      <th scope="col">colour error</th>
+                    </tr>
+                  </thead>
+                  <tbody id="method-table"></tbody>
+                </table>
+                <p class="aside" id="method-note">
+                  Higher PSNR is better. Colour error is the mean miss in the
+                  red-minus-green and blue-minus-green planes, in 8-bit levels.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ───────────────────────────  05  the lab  ─────────────────────────────── -->
+        <section class="section" id="lab" aria-labelledby="lab-title">
+          <div class="section-margin">
+            <span class="fig">fig. 05</span>
+            <span class="tick" aria-hidden="true"></span>
+          </div>
+
+          <div class="section-body">
+            <div class="section-head">
+              <h2 class="heading" id="lab-title" data-reveal>Everything, exposed</h2>
+              <p class="note">
+                Every number below was produced by the same code that drew the
+                picture. Click a pixel to print the arithmetic behind it.
+              </p>
+            </div>
+
+            <div class="lab-controls" id="lab-grid"></div>
+
+            <dl class="readouts" id="readouts-grid" aria-live="polite"></dl>
+
+            <div class="explain" id="explain">
+              <h3 class="subheading">What happened at one pixel</h3>
+              <div id="explain-body">
+                <p class="explain-empty">Click the image in fig. 01. The numbers here are the ones the code used.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="colophon">
+        <p class="compute-note" id="compute-note">computed in your browser</p>
+        <p class="colophon-note">
+          No network requests after load. No server. The physics, the noise and
+          the interpolation all run in a Web Worker on this device.
+        </p>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

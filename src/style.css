@@ -1,0 +1,1171 @@
+/*
+ * Phase 2 styling: enough to see and use the thing, not the finished design.
+ *
+ * The colour and type tokens below are final — they are the art direction, and
+ * the layout work in phase 4 sits on top of them rather than replacing them.
+ * Everything here is deliberately plain: no animation library, no grid
+ * experiments, no decorative elements. If a rule exists only to look designed,
+ * it belongs in phase 4.
+ */
+
+@import '@fontsource/instrument-serif/400.css';
+@import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource-variable/hanken-grotesk';
+
+:root {
+  /* Ground is near-black and warm, the way a darkroom is not quite neutral. */
+  --ground: #0c0c0b;
+  --ground-raised: #131312;
+  --text: #e8e3d6;
+  --text-dim: #8c8a80;
+  --rule: #2b2b27;
+
+  /* One accent only, and it means "this is where you are": focus, active, cursor. */
+  --accent: #f5b301;
+
+  /* Red, green and blue mean the colour filters and nothing else. */
+  --red: #d6452f;
+  --green: #4c9a52;
+  --blue: #3566c9;
+
+  --mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  --sans: 'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+
+  --gutter: clamp(1rem, 4vw, 4rem);
+  --measure: 68rem;
+
+  color-scheme: dark;
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--ground);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Lenis's own requirements. It animates the scroll position of the window, so
+   the stylesheet has to stop the browser from fighting it with smooth scrolling
+   or a locked height. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+#app {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 var(--gutter) 6rem;
+}
+
+/* Hairlines everywhere instead of cards: one pixel of structure, no boxes. */
+.masthead,
+.stack,
+.controls,
+.readouts,
+.explain {
+  border-top: 1px solid var(--rule);
+  padding-top: 1rem;
+}
+
+.masthead {
+  padding: clamp(3rem, 8vw, 6rem) 0 2rem;
+  border-top: 0;
+}
+
+.eyebrow {
+  margin: 0 0 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+h1,
+h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(2.4rem, 6.5vw, 4.6rem);
+  line-height: 1.02;
+  max-width: 18ch;
+}
+
+h2 {
+  font-size: clamp(1.25rem, 2.4vw, 1.75rem);
+  line-height: 1.15;
+}
+
+.lede {
+  margin: 1.5rem 0 0;
+  max-width: 44ch;
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  color: var(--text);
+}
+
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.note {
+  margin: 0;
+  max-width: 40ch;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+section + section {
+  margin-top: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+/* ---------------------------------------------------------------- viewer -- */
+
+.viewer {
+  position: relative;
+  margin-top: 0.5rem;
+}
+
+.viewer-canvas {
+  position: relative;
+  /* aspect-ratio is set by the view module from the frame's real dimensions. */
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid var(--rule);
+  cursor: crosshair;
+  touch-action: none;
+  /* Cap the device pixel ratio; a 3x phone screen does not need 3x the pixels
+     for a 384-wide simulation. */
+  contain: paint;
+}
+
+.viewer-canvas canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* Nearest-neighbour: the whole point is that you can see individual pixels. */
+  image-rendering: pixelated;
+}
+
+/* The mosaic half is revealed by a clip, so both canvases stay identical in
+   size and the divider is a pure mask. Cheaper and simpler than drawing twice.
+   Only the 2D fallback uses this: the WebGL painter mixes the same two frames
+   in one shader and needs no second element. */
+#canvas-mosaic {
+  clip-path: inset(0 calc(100% - var(--split, 50%)) 0 0);
+  /* The mosaic has to sit ON TOP of the developed image: it is the one being
+     clipped, so whatever is underneath shows through on the right. Without this
+     the developed canvas (later in the document) covers the mosaic entirely and
+     the divider appears to do nothing — which is exactly the bug the screenshot
+     harness caught. */
+  z-index: 1;
+}
+
+/* With WebGL running, the two 2D canvases are dead weight — hide them rather
+   than leave them painting behind the shader. */
+.viewer-canvas.is-webgl #canvas-mosaic,
+.viewer-canvas.is-webgl #canvas-developed {
+  display: none;
+}
+
+.divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--split, 50%);
+  width: 2.5rem;
+  transform: translateX(-50%);
+  cursor: col-resize;
+  touch-action: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  outline: none;
+}
+
+.divider-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: var(--accent);
+  transform: translateX(-50%);
+}
+
+.divider-grip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.6rem;
+  height: 3rem;
+  transform: translate(-50%, -50%);
+  background: var(--accent);
+}
+
+.divider:focus-visible .divider-line {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.viewer-tag {
+  position: absolute;
+  bottom: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: #0c0c0bcc;
+  border: 1px solid var(--rule);
+  padding: 0.15rem 0.45rem;
+  pointer-events: none;
+}
+
+.viewer-tag-left {
+  left: 0.5rem;
+}
+
+.viewer-tag-right {
+  right: 0.5rem;
+}
+
+.viewer-status {
+  margin: 0.5rem 0 0;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  min-height: 1.2em;
+}
+
+/* ----------------------------------------------------------------- loupe -- */
+
+.loupe {
+  position: fixed;
+  z-index: 20;
+  pointer-events: none;
+  background: var(--ground-raised);
+  border: 1px solid var(--accent);
+  padding: 0.25rem;
+  width: max-content;
+}
+
+.loupe canvas {
+  display: block;
+  image-rendering: pixelated;
+}
+
+.loupe-caption {
+  margin: 0.25rem 0 0;
+  max-width: 15rem;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+/* ----------------------------------------------------------------- stack -- */
+
+/* The stage is a fixed-height window onto a 3D scene, so the scroll length (and
+   therefore how much scrolling it takes to pull the layers apart) is the same on
+   a phone as on a desktop. */
+.stack-stage {
+  position: relative;
+  height: clamp(22rem, 52vh, 34rem);
+  border-bottom: 1px solid var(--rule);
+  overflow: hidden;
+}
+
+#stack-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The four layers, as a caption row under the stage: 01–04 is the order light
+   actually meets them, top to bottom in a real camera. */
+.stack-legend {
+  margin: 0;
+  padding: 0.85rem 0 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem 1.25rem;
+  border-top: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.stack-index {
+  color: var(--accent);
+  margin-right: 0.5rem;
+}
+
+.stack-name {
+  color: var(--text);
+}
+
+@media (max-width: 40rem) {
+  .stack-legend {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* The window of the frame that is on show, plus the photon count. Monospace and
+   tabular so the numbers do not jitter while the sliders move. */
+.stack-readout {
+  margin: 0.85rem 0 0;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+/* -------------------------------------------------------------- controls -- */
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1.25rem 2rem;
+}
+
+.control {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.control-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.control-value {
+  font-size: 0.8125rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 1.25rem;
+  background: transparent;
+  margin: 0;
+  cursor: pointer;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 1px;
+  background: var(--rule);
+}
+
+input[type='range']::-moz-range-track {
+  height: 1px;
+  background: var(--rule);
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-top: -0.35rem;
+  background: var(--text);
+  border: 0;
+  border-radius: 0;
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 0.7rem;
+  height: 0.7rem;
+  background: var(--text);
+  border: 0;
+  border-radius: 0;
+}
+
+input[type='range']:focus-visible::-webkit-slider-thumb {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px #0c0c0b, 0 0 0 5px var(--accent);
+}
+
+input[type='range']:focus-visible::-moz-range-thumb {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px #0c0c0b, 0 0 0 5px var(--accent);
+}
+
+select {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  color: var(--text);
+  background: var(--ground-raised);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  padding: 0.35rem 0.5rem;
+  width: 100%;
+}
+
+select:focus-visible,
+input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.control-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+input[type='checkbox'] {
+  accent-color: var(--accent);
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+}
+
+/* -------------------------------------------------------------- readouts -- */
+
+.readouts {
+  margin-top: clamp(2rem, 4vw, 3rem);
+}
+
+.readouts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1.25rem 2rem;
+  margin: 1.25rem 0 0;
+}
+
+.readout dt {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.readout dd {
+  margin: 0.2rem 0 0;
+  font-family: var(--mono);
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.readout dd .unit {
+  font-size: 0.75em;
+  color: var(--text-dim);
+  margin-left: 0.15em;
+}
+
+/* --------------------------------------------------------------- explain -- */
+
+.explain-body {
+  font-size: 0.9375rem;
+}
+
+.placeholder {
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+.explain-sentence {
+  font-family: var(--serif);
+  font-size: clamp(1.15rem, 2.2vw, 1.6rem);
+  line-height: 1.25;
+  margin: 0 0 1.25rem;
+  max-width: 40ch;
+}
+
+.explain-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.5rem;
+}
+
+.explain-channel {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+}
+
+.channel-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.swatch {
+  width: 0.55rem;
+  height: 0.55rem;
+  display: inline-block;
+}
+
+.channel-value {
+  font-family: var(--mono);
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.channel-formula {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.kernel {
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  margin-top: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.kernel td,
+.kernel th {
+  border: 1px solid var(--rule);
+  padding: 0.15rem 0.35rem;
+  text-align: right;
+  color: var(--text-dim);
+}
+
+.kernel td.is-tap {
+  color: var(--text);
+  background: #1a1a18;
+}
+
+.kernel td.is-centre {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+
+/* ---------------------------------------------------------------- footer -- */
+
+.colophon {
+  margin-top: clamp(3rem, 7vw, 5rem);
+  border-top: 1px solid var(--rule);
+  padding-top: 1rem;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Phase 4 — the sheet.
+   A darkroom contact sheet meets a lab instrument: a 12-column measure, hairline
+   rules instead of cards, margin annotations with figure numbers, registration
+   marks, and numbers set large enough to be read as the subject rather than as
+   supporting text.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+#app {
+  max-width: 84rem;
+  padding: 0 clamp(1rem, 4vw, 3.5rem) 0;
+}
+
+/* ── masthead ─────────────────────────────────────────────────────────── */
+
+.masthead {
+  border-bottom: 1px solid var(--rule);
+  padding: clamp(2.5rem, 7vw, 6rem) 0 clamp(2rem, 4vw, 3.5rem);
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: clamp(0.75rem, 1.6vw, 2rem);
+  row-gap: clamp(1rem, 2vw, 1.75rem);
+}
+
+.masthead .eyebrow {
+  grid-column: 1 / span 6;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.eyebrow-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+.display {
+  grid-column: 1 / span 9;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.75rem, 7.5vw, 5.75rem);
+  line-height: 0.96;
+  letter-spacing: -0.012em;
+  margin: 0;
+}
+
+.masthead .lede {
+  grid-column: 1 / span 6;
+  margin: 0;
+  font-size: clamp(1.0625rem, 1.5vw, 1.25rem);
+  color: var(--text);
+  max-width: 40ch;
+}
+
+/* ── the section grid ─────────────────────────────────────────────────── */
+
+.section {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: clamp(0.75rem, 1.6vw, 2rem);
+  row-gap: clamp(1.25rem, 2.5vw, 2.25rem);
+  padding: clamp(2.75rem, 6vw, 5rem) 0 clamp(3rem, 6vw, 5.25rem);
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+}
+
+.section-margin {
+  grid-column: 1 / span 2;
+  padding-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.fig {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* Registration mark: the corner bracket a print shop uses to line up a sheet.
+   Drawn with borders, not gradients. */
+.tick {
+  width: 11px;
+  height: 11px;
+  border-top: 1px solid var(--rule);
+  border-left: 1px solid var(--rule);
+}
+
+.section-body {
+  grid-column: 3 / -1;
+  min-width: 0;
+}
+
+.section-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: clamp(1rem, 3vw, 3rem);
+  align-items: end;
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.section-head .note { margin: 0; }
+
+.heading {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.75rem, 3.4vw, 2.75rem);
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.subheading {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 0 0 1rem;
+}
+
+/* ── the aside: a lab note in the margin of the text ──────────────────── */
+
+.aside {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--text-dim);
+  border-left: 1px solid var(--rule);
+  padding-left: 0.9rem;
+  max-width: 46ch;
+  margin: clamp(1.5rem, 3vw, 2rem) 0 0;
+}
+
+/* ── 02 capture ───────────────────────────────────────────────────────── */
+
+.capture {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 3vw, 3rem);
+  margin-top: clamp(1.75rem, 3vw, 2.5rem);
+  padding-top: clamp(1.5rem, 3vw, 2rem);
+  border-top: 1px solid var(--rule);
+}
+
+#capture-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: clamp(1rem, 2.5vw, 2.5rem);
+  row-gap: clamp(1.1rem, 2vw, 1.6rem);
+}
+
+#reconstruct-grid,
+#lab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  column-gap: clamp(1rem, 2.5vw, 2.5rem);
+  row-gap: clamp(1.1rem, 2vw, 1.6rem);
+  margin-bottom: clamp(1.75rem, 3vw, 2.5rem);
+}
+
+/* The numbers that belong to light, beside the controls that cause them. */
+.capture-readout {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0;
+  align-content: start;
+}
+
+.capture-readout .readout dd,
+#readouts-grid .readout dd {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+  line-height: 1.1;
+  margin: 0.15rem 0 0;
+  color: var(--text);
+}
+
+.capture-readout .readout dt {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ── 03 the pattern ───────────────────────────────────────────────────── */
+
+.pattern {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: start;
+}
+
+.pattern-figure { margin: 0; }
+
+#bayer-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 26rem;
+  border: 1px solid var(--rule);
+  image-rendering: pixelated;
+}
+
+.pattern-caption {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  margin-top: 0.6rem;
+}
+
+.pattern-copy p { margin: 0 0 1.25rem; max-width: 44ch; }
+
+.pattern-counts {
+  display: flex;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  margin: 0;
+  flex-wrap: wrap;
+}
+
+.pattern-count { display: flex; flex-direction: column; gap: 0.15rem; }
+
+.pattern-count dt {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pattern-count dd {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.pattern-swatch {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+}
+
+/* ── 04 the guess ─────────────────────────────────────────────────────── */
+
+.guess {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 3vw, 3rem);
+  align-items: start;
+}
+
+.guess-figure { margin: 0; }
+
+#error-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  image-rendering: pixelated;
+}
+
+.guess-caption {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  margin-top: 0.6rem;
+}
+
+/* The one ramp in the page, and it is the scale of a measurement. */
+.guess-swatch {
+  width: 34px;
+  height: 8px;
+  background: linear-gradient(90deg, #0c0c0b, #40320c, #f5b301);
+  flex: none;
+}
+
+.method-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+}
+
+.method-table thead th {
+  text-align: left;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.625rem;
+  color: var(--text-dim);
+  padding: 0 0 0.6rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.method-table tbody th {
+  text-align: left;
+  font-weight: 400;
+  font-size: 0.8125rem;
+  padding: 0.55rem 0.75rem 0.55rem 0;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--rule);
+  color: var(--text-dim);
+}
+
+.method-table td {
+  border-bottom: 1px solid var(--rule);
+  padding: 0.55rem 0;
+  vertical-align: middle;
+}
+
+.method-table th:last-child,
+.method-table td:last-child { text-align: right; }
+
+.method-table tr.is-active th,
+.method-table tr.is-active .method-number { color: var(--accent); }
+
+.method-score { width: 52%; }
+
+.method-bar {
+  display: block;
+  height: 2px;
+  background: var(--rule);
+  margin-bottom: 0.35rem;
+}
+
+.method-table tr.is-active .method-bar { background: var(--accent); }
+
+.method-number,
+.method-chroma { font-variant-numeric: tabular-nums; }
+
+.method-table tbody tr td { color: var(--text); }
+
+#method-note { max-width: 34ch; }
+
+/* ── 05 the lab ───────────────────────────────────────────────────────── */
+
+.readouts { margin: 0 0 clamp(1.75rem, 3vw, 2.5rem); }
+
+#readouts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: clamp(1.25rem, 2.5vw, 2rem) clamp(1rem, 2vw, 2rem);
+  margin: 0;
+  padding-top: clamp(1.25rem, 2.5vw, 1.75rem);
+  border-top: 1px solid var(--rule);
+}
+
+#readouts-grid .readout dt {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ── the explanation panel ────────────────────────────────────────────── */
+
+.explain {
+  border-top: 1px solid var(--rule);
+  padding-top: clamp(1.25rem, 2.5vw, 1.75rem);
+}
+
+.explain-empty {
+  color: var(--text-dim);
+  font-size: 0.9375rem;
+  margin: 0;
+}
+
+/* ── footer ───────────────────────────────────────────────────────────── */
+
+.colophon {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: clamp(0.75rem, 1.6vw, 2rem);
+  padding: clamp(1.5rem, 3vw, 2.5rem) 0 clamp(3rem, 6vw, 5rem);
+  border-top: 1px solid var(--rule);
+}
+
+.compute-note {
+  grid-column: 1 / span 6;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+.colophon-note {
+  grid-column: 7 / -1;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  line-height: 1.7;
+  color: var(--text-dim);
+  margin: 0;
+  max-width: 52ch;
+}
+
+/* ── narrow screens ───────────────────────────────────────────────────── */
+
+@media (max-width: 62rem) {
+  .masthead,
+  .section,
+  .colophon { display: block; }
+
+  .masthead .eyebrow { margin-bottom: 1.5rem; }
+  .display { margin-bottom: 1.5rem; }
+
+  .section-margin {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    padding-top: 0;
+    margin-bottom: 1.25rem;
+  }
+
+  .section-head,
+  .pattern,
+  .guess,
+  .capture { display: block; }
+
+  .section-head .note,
+  .pattern-copy,
+  .method-panel,
+  .capture-readout { margin-top: 1.25rem; }
+
+  .compute-note { margin-bottom: 1rem; }
+}
+
+@media (max-width: 40rem) {
+  #capture-grid { grid-template-columns: minmax(0, 1fr); }
+  .pattern-counts { gap: 1.5rem; }
+  .guess-swatch { width: 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* One line of guidance under the error map: it is copy, not a caption. */
+.guess-hint {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  line-height: 1.65;
+  color: var(--text-dim);
+  max-width: 46ch;
+  margin: 0.85rem 0 0;
+}
+
+
+/* The filter split is three numbers and two separators: give it two columns so
+   it reads on one line instead of breaking after the first number. */
+#readouts-grid [data-readout="split"] {
+  grid-column: span 2;
+}
+
+#readouts-grid [data-readout="split"] dd {
+  white-space: nowrap;
+}
+
+@media (max-width: 40rem) {
+  #readouts-grid [data-readout="split"] { grid-column: span 1; }
+}
+
+/* ---------------------------------------------------------------------------
+   Phase 5 additions: keyboard picking, honest pending states, the skip link.
+   --------------------------------------------------------------------------- */
+
+/* The selected pixel, when the image is driven from the keyboard. A 14px box so
+   it is visible at any viewport size; one pixel of the 384px frame is only a few
+   CSS pixels wide, which would be unfindable. */
+.pick-cursor {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border: 1px solid var(--accent);
+  box-shadow: 0 0 0 1px rgb(12 12 11 / 0.7);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.pick-cursor::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  background: var(--accent);
+}
+
+/* The image is a control now, so it takes a focus ring like every other one. */
+.viewer-canvas:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* A number the current frame did not compute — a slider is still moving, or the
+   scoring has not come back yet. Dimmed rather than stale: a value that is wrong
+   by a few decibels is worse than a dash. */
+[data-pending] {
+  color: var(--text-dim);
+}
+
+/* First stop for a keyboard: jump past the masthead to the argument. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 30;
+  padding: 0.5rem 0.75rem;
+  background: var(--ground);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+}

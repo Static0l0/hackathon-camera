@@ -1,0 +1,71 @@
+name: deploy
+
+# Build the site, run the tests, and publish dist/ to GitHub Pages.
+#
+# The only interesting part is the base path: a *project* page is served from
+# https://<user>.github.io/<repo>/, so every asset URL needs that prefix, while a
+# *user* page (a repo literally named <user>.github.io) is served from the root.
+# The workflow works out which one it is instead of hard-coding the repository
+# name, so renaming the repo cannot silently ship a broken site.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; a newer push supersedes a queued one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The engine's correctness is the part of this project that cannot be
+      # eyeballed, so a red test stops the deploy rather than shipping.
+      - run: npm test
+
+      - name: Work out the base path
+        id: base
+        run: |
+          if [[ "${GITHUB_REPOSITORY#*/}" == *.github.io ]]; then
+            echo "path=/" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build
+        env:
+          BASE_PATH: ${{ steps.base.outputs.path }}
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

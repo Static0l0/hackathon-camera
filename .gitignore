@@ -1,0 +1,20 @@
+﻿# dependencies
+node_modules/
+
+# build output
+dist/
+
+# scratch captures from the screenshot harness
+shot-*.png
+shots/
+
+# local npm cache (the sandbox blocks the default one)
+.npm-cache/
+
+# editor and OS noise
+.DS_Store
+Thumbs.db
+.vscode/
+
+# chromium's own log from the headless screenshot runs
+.edge.log
