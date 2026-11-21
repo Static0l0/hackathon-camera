@@ -13,12 +13,13 @@
 
 import './style.css';
 
-import { DEFAULT_SETTINGS } from './engine/index.js';
+import { DEFAULT_SETTINGS, nearestColourSite } from './engine/index.js';
 import { createBayerDiagram } from './view/bayerDiagram.js';
 import { createCanvasPainter } from './view/canvasPainter.js';
 import { createEngineClient } from './view/client.js';
 import { createControls } from './view/controls.js';
 import { createExplainPanel } from './view/explainPanel.js';
+import { createGuessDemo } from './view/guessDemo.js';
 import { createErrorHeatmap, createMethodTable } from './view/guessPanel.js';
 import { createLoupe } from './view/loupe.js';
 import { createMotion } from './view/motion.js';
@@ -69,6 +70,7 @@ const elements = {
   errorCaption: byId('error-caption'),
   methodTable: byId('method-table'),
   methodNote: byId('method-note'),
+  guessDemo: byId('guess-demo'),
   explainBody: byId('explain-body'),
   computeNote: byId('compute-note'),
 };
@@ -156,6 +158,11 @@ const methodTable = createMethodTable({
   note: elements.methodNote,
 });
 
+const guessDemo = createGuessDemo({
+  root: elements.guessDemo,
+  onNext: () => nextGuessSite(),
+});
+
 /** Coalesce changes so a slider drag does not queue four comparisons. */
 let compareTimer = 0;
 
@@ -209,6 +216,7 @@ const viewer = createSplitView({
   onPick(pixel, event) {
     lastPick = pixel;
     client.requestExplain(pixel.x, pixel.y);
+    requestGuessAt(pixel.x, pixel.y);
 
     // A device with no hover never fires onHover, so the loupe would be
     // unreachable on a phone. A tap shows it for a moment instead.
@@ -304,6 +312,11 @@ const client = createEngineClient({
     // that is now on screen. Otherwise the panel would describe a stale image.
     if (lastPick) client.requestExplain(lastPick.x, lastPick.y);
 
+    // The guess panel always teaches from a real site, even before anyone clicks:
+    // an empty section would be a blank state, and this page does not open on one.
+    if (guessPick) client.requestGuess(guessPick.x, guessPick.y);
+    else requestGuessAt(Math.round(frame.width * 0.5), Math.round(frame.height * 0.42));
+
     // The stack watches the pixel under the cursor's selection if there is one,
     // otherwise the middle of the frame. Either way it is a real window of the
     // frame on screen, and it is re-cut whenever the exposure changes.
@@ -319,10 +332,19 @@ const client = createEngineClient({
     methodTable.update(rows, settings.method);
   },
 
+  onGuess(guess) {
+    guessDemo.show(guess);
+  },
+
   onExplain(explanation) {
     // explainPixel returns the method's own record (id, label, year, blurb),
     // not a bare id, because the panel shows the year next to the name.
     explainPanel.show(explanation, explanation.method?.label ?? explanation.method?.id ?? '');
+
+    // The full arithmetic lives in the lab, thousands of pixels below. A reader
+    // who clicks once in the hook would otherwise see the loupe and nothing else,
+    // so the answer is echoed where they clicked.
+    elements.viewerStatus.textContent = `${explanation.sentence} Full arithmetic in fig. 05.`;
   },
 
   onFailure(message) {
@@ -332,6 +354,38 @@ const client = createEngineClient({
 
 elements.viewerStatus.textContent =
   'drag to wipe · click a pixel to see what the algorithm did there';
+
+/** The site the guess panel is teaching from, or null before the first frame. */
+let guessPick = null;
+
+/**
+ * Ask the panel about the nearest site that actually had to invent its green.
+ *
+ * A green site measured the thing the panel is about, so clicking one is turned
+ * into its nearest red or blue neighbour instead of showing an empty lesson.
+ *
+ * @param {number} x @param {number} y
+ */
+function requestGuessAt(x, y) {
+  const frame = viewer.getFrame();
+  if (!frame) return;
+  const site = nearestColourSite(frame.mask, frame.width, frame.height, x, y);
+  guessPick = site;
+  client.requestGuess(site.x, site.y);
+}
+
+/** Walk along the row to the next comparable site. */
+function nextGuessSite() {
+  const frame = viewer.getFrame();
+  if (!frame) return;
+  if (!guessPick) {
+    requestGuessAt(Math.round(frame.width / 2), Math.round(frame.height / 2));
+    return;
+  }
+  // An even step keeps the filter colour the same, so the reader is comparing
+  // like with like; wrapping at the edge stops the button sticking at a border.
+  requestGuessAt((guessPick.x + 16) % frame.width, guessPick.y);
+}
 
 // First frame. No blank state: the page opens on a real image.
 client.requestFrame(settings);

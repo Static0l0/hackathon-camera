@@ -34,6 +34,7 @@ import {
   expectedElectrons,
   explainPixel,
   exposureGain,
+  guessSite,
   linearToSrgb,
   runPipeline,
   snrDb,
@@ -62,6 +63,8 @@ self.addEventListener('message', (event) => {
     handleFrame(message);
   } else if (message.type === 'explain') {
     handleExplain(message);
+  } else if (message.type === 'guess') {
+    handleGuess(message);
   } else if (message.type === 'patch') {
     handlePatch(message);
   } else if (message.type === 'compare') {
@@ -161,6 +164,35 @@ function handleExplain({ id, x, y }) {
       detail: lastFrame.demosaic.detail,
     });
     postMessage({ type: 'explain', id, explanation });
+  } catch (error) {
+    postMessage({ type: 'failed', id, message: describeError(error) });
+  }
+}
+
+/**
+ * One missing green, with the numbers that went into it and the value it should
+ * have been. Answered from the frame on screen, so the panel cannot describe a
+ * picture the visitor is no longer looking at.
+ *
+ * @param {{id: number, x: number, y: number}} message
+ */
+function handleGuess({ id, x, y }) {
+  if (!lastFrame) {
+    postMessage({ type: 'failed', id, message: 'guess asked before any frame' });
+    return;
+  }
+
+  try {
+    const guess = guessSite({
+      mosaic: lastFrame.mosaic,
+      mask: lastFrame.mask,
+      width: lastFrame.width,
+      height: lastFrame.height,
+      reference: lastFrame.reference.linear,
+      x,
+      y,
+    });
+    postMessage({ type: 'guess', id, guess });
   } catch (error) {
     postMessage({ type: 'failed', id, message: describeError(error) });
   }

@@ -519,3 +519,108 @@ nobody can load is not a site and a site nobody can operate is not an explainer.
   a physical handset.
 - The stack still reads as a pile at mid-separation; that is a composition problem, not
   a data one, and it is the first thing I would redraw.
+
+---
+
+## Phase 6: explaining the guess instead of showing it
+
+The complaint was correct and checkable: the page showed what the algorithms produced and
+never said how any of them worked. A search for every word that would name a procedure --
+interpolat, average, neighbour, borrow, luminance, difference -- matched exactly one line
+in `index.html`, and it was the footer. Section 04 stated a score and a kernel and called
+it an explanation.
+
+Three things were missing: the **procedure** (that demosaicing is two passes), the
+**alternatives** (two candidate values, not one asserted choice), and a **counterfactual**
+(what the wrong choice would have looked like). The panel below supplies the first two by
+asking the reader to make the guess before the algorithm does.
+
+### `src/engine/guess.js`
+
+- `guessSite({mosaic, mask, width, height, reference, x, y})` -> for a green site, the
+  measured value and nothing to guess; for a red or blue site, the four green neighbours,
+  both pairwise means, both gradients, Hamilton-Adams' own answer, bilinear's answer, the
+  true value from the clean reference, the signed error of each, and a 5x5 window of the
+  neighbourhood. Why: the panel must quote the same numbers the picture was built from, so
+  it calls `greenAtColourSite` -- the demosaicer's own function -- rather than re-deriving
+  the arithmetic beside it. That is the one design decision that keeps this honest.
+- `nearestColourSite(mask, width, height, x, y)` -> the clicked site if it already had to
+  guess, else the first red or blue neighbour. Why: a green pixel measured the very thing
+  the panel is about, so clicking one should not open an empty lesson.
+- `window5(...)` (private) -> 25 measured values with the filter that passed each, in
+  row-major order, mirror-indexed at the frame edge. Why: the reader needs to see that the
+  two greens being averaged are physically next door, not abstract numbers.
+
+### `src/engine/pipeline.js` (changed)
+
+- `captureFrame(settings)` now also returns `referenceLinear`, and `runPipeline` returns
+  `reference: { srgb, linear }`. Why: PSNR only ever needed the 8-bit version, but "what
+  should this pixel's green have been" needs the linear one, before white balance.
+
+### `src/worker/engine.worker.js`, `src/view/client.js` (changed)
+
+- `handleGuess({id, x, y})` -> reads the frame on screen and answers `{type: 'guess'}`.
+  Why: same reason as `explain` -- a panel that recomputes from the settings could describe
+  a picture the visitor is no longer looking at. `sendGuess` / `requestGuess(x, y)` are not
+  queued, because one guess is a 5x5 read and costs nothing.
+
+### `src/view/guessDemo.js` (new)
+
+- `createGuessDemo({root, onNext})` -> builds the panel once and reuses it: the 5x5 window,
+  the question, two buttons carrying the two candidate means, the reveal, and "another
+  site". `choose(direction)` locks the buttons, marks the chosen button and the chosen
+  neighbours, and renders the scores. Why: the reader has to commit before seeing the
+  answer, or they read it as a fact rather than a choice.
+- `verdictLine(guess, yours)` -> names whoever landed closest to the truth and by how many
+  DN, calling a sub-1 DN difference a tie. Why: it is the only line in the panel that could
+  flatter a method, so it is computed from the numbers rather than written.
+- `withAlpha(hex, alpha)` -> `rgba()` for the filter tint. Why: the tint is data, so it uses
+  the same three colours as every other readout, at an alpha that keeps 4.5:1 against the
+  numbers on top.
+
+### `src/view/guessPanel.js` (changed)
+
+- `createMethodTable` grew a fourth column, `ASSUMES[row.id]` -> one sentence naming the
+  assumption each method rests on ("the image is smooth in every direction"). Why: the
+  score says who won here; the assumption says why the loser can still look wrong.
+
+### `src/main.js` (changed)
+
+- `requestGuessAt(x, y)` -> snaps a click to a site that had to guess and asks the worker.
+- `nextGuessSite()` -> steps 16 px along the row, wrapping at the edge. Why 16: an even step
+  keeps the same filter colour, so the reader compares like with like.
+- `onExplain` now also writes the sentence under the viewer. Why: the full arithmetic is
+  thousands of pixels below in fig. 05, and a first-time visitor who clicks once in fig. 01
+  would otherwise get a magnifier and no answer.
+
+### `index.html` (changed)
+
+Section 04 now opens with what the reader has to decide, then the panel, then the two-pass
+procedure in words -- green first, then colour carried on the red-minus-green and
+blue-minus-green differences -- then the method picker, error map and table. The table's
+new "assumes" column is paired with a paragraph naming what each method gets wrong.
+
+### Verified
+
+- `npm test` -> 69 passed (6 files), including the test that the panel's Hamilton-Adams
+  number equals `demosaicWith('hamiltonAdams').detail.green` and its bilinear number equals
+  `demosaicWith('bilinear').rgb[(i*3)+GREEN]`. If those two ever disagree, the panel is
+  lying about the picture.
+- In the browser: `Row 91, column 193 passed blue and measured 2,170. It never saw green.`
+  Choosing the column gives `you 1,854 (+26) · bilinear 1,814 (-14) · Hamilton-Adams 1,757
+  (-71) · the sensor would have measured 1,828`, with the verdict naming bilinear and
+  explaining that Hamilton-Adams took the row because 126 < 170 and then bent that mean by
+  the curvature of red.
+- Clicking a pixel in fig. 01 now prints the answer under the image: `This pixel only
+  measured blue: 2390. Red (1652) and green (1914) were guessed. Full arithmetic in fig. 05.`
+- `npm run build` -> 173 kB entry (65 kB gzip), three.js still lazy.
+
+### Known at the end of Phase 6
+
+- The two-pass paragraph is prose, not a picture. A six-frame stepper of one 24x24 patch
+  would teach it faster and is the next thing I would build.
+- The curvature step is stated ("bends that mean by the local curvature of red") and its
+  effect is visible in the numbers, but the reader never sees the five red values it uses.
+- There is still no switch that turns the gradient test off, so the zipper artefact the copy
+  names cannot be produced on demand.
+

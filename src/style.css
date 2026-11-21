@@ -1169,3 +1169,238 @@ input[type='checkbox'] {
   left: 1rem;
   top: 1rem;
 }
+/*
+ * Phase 6: the guess panel.
+ *
+ * The page used to show what the algorithms produced. This block styles the one
+ * place where the reader is asked to produce it themselves, so the type follows
+ * the same rules as the rest of the instrument: mono for numbers, hairlines
+ * instead of cards, amber only for the thing being pointed at.
+ */
+
+.procedure {
+  max-width: 52ch;
+  margin: 2.5rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+}
+
+.procedure .note + .note {
+  margin-top: 0.75rem;
+}
+
+.guess-demo {
+  display: grid;
+  grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: start;
+  margin: 2.5rem 0 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+.guess-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.guess-window {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 2px;
+  width: 100%;
+}
+
+.guess-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  background: var(--ground-raised);
+  border: 1px solid transparent;
+}
+
+/* The site under discussion. Amber because it is the thing being pointed at,
+   not because it is a colour in the data. */
+.guess-cell.is-centre {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Which neighbours a choice would actually use. Dimming the rest is the whole
+   explanation of "along the row" versus "down the column". */
+.guess-window[data-preview='horizontal'] .guess-cell:not(.is-row):not(.is-centre),
+.guess-window[data-preview='vertical'] .guess-cell:not(.is-column):not(.is-centre) {
+  opacity: 0.24;
+}
+
+.guess-window[data-choosing='horizontal'] .guess-cell.is-row:not(.is-centre),
+.guess-window[data-choosing='vertical'] .guess-cell.is-column:not(.is-centre) {
+  border-color: var(--accent);
+}
+
+.guess-lead {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 42ch;
+}
+
+.guess-lead[data-kind='measured'] {
+  color: var(--text-dim);
+}
+
+.guess-ask {
+  margin: 0.75rem 0 0;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.guess-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.guess-choice,
+.guess-next {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--rule);
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+
+.guess-choice:hover:not(:disabled),
+.guess-next:hover {
+  border-color: var(--text-dim);
+}
+
+.guess-choice:focus-visible,
+.guess-next:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.guess-choice:disabled {
+  cursor: default;
+  color: var(--text-dim);
+}
+
+.guess-choice.is-chosen {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.guess-choice-mean {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.guess-choice.is-chosen .guess-choice-mean {
+  color: inherit;
+}
+
+.guess-reveal {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+}
+
+.guess-scores {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.35rem 1.5rem;
+  margin: 0;
+  align-items: baseline;
+}
+
+.guess-row {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.guess-value {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--text);
+}
+
+.guess-error {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
+.guess-row.is-truth,
+.guess-value.is-truth {
+  color: var(--accent);
+  border-top: 1px solid var(--rule);
+  padding-top: 0.5rem;
+}
+
+.guess-value.is-truth {
+  font-size: 1.0625rem;
+}
+
+.guess-verdict {
+  margin: 1rem 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--text);
+  max-width: 52ch;
+}
+
+.guess-next {
+  margin-top: 1.5rem;
+  align-self: start;
+}
+
+.method-assumes {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+#method-failures {
+  margin-top: 1rem;
+}
+
+@media (max-width: 62rem) {
+  .guess-demo {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+
+  .guess-window {
+    max-width: 15rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guess-choice,
+  .guess-next {
+    transition: none;
+  }
+}
+

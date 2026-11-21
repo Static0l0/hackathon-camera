@@ -94,6 +94,17 @@ export function createErrorHeatmap({ canvas, caption }) {
 }
 
 /**
+ * One sentence per method, naming the assumption the whole method rests on. The
+ * score says which won here; the assumption says why it can still look wrong.
+ */
+const ASSUMES = {
+  nearest: 'a neighbour is close enough',
+  bilinear: 'the image is smooth in every direction',
+  hamiltonAdams: 'edges run along one axis or the other',
+  malvarHeCutler: 'the gradient is flat enough to cancel',
+};
+
+/**
  * Score every method on the same capture, and mark the one on screen.
  *
  * @param {{tbody: HTMLElement, note?: HTMLElement}} options
@@ -138,7 +149,11 @@ export function createMethodTable({ tbody, note }) {
         chroma.className = 'method-chroma';
         chroma.textContent = row.chromaError.toFixed(2);
 
-        line.append(name, psnr, chroma);
+        const assumes = document.createElement('td');
+        assumes.className = 'method-assumes';
+        assumes.textContent = ASSUMES[row.id] ?? '';
+
+        line.append(name, psnr, chroma, assumes);
         return line;
       }),
     );

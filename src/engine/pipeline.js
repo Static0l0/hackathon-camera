@@ -162,7 +162,7 @@ export function captureFrame(settings) {
   const referenceSrgb = toSrgb(referenceLinear, width, height);
   mark('reference', t);
 
-  return { scene, filtered, exposure, mosaic, mask, coverage, referenceSrgb, timings };
+  return { scene, filtered, exposure, mosaic, mask, coverage, referenceSrgb, referenceLinear, timings };
 }
 
 /**
@@ -252,7 +252,7 @@ export function runPipeline(overrides = {}, options = {}) {
     coverage,
     demosaic: { method: settings.method, rgb: linearRecon, detail: demosaic.detail },
     display: { srgb, balanced },
-    reference: { srgb: capture.referenceSrgb },
+    reference: { srgb: capture.referenceSrgb, linear: capture.referenceLinear },
     whiteBalance: { ...wbEstimate, applied: settings.whiteBalance, gains },
     metrics,
     timings,

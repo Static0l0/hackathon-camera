@@ -22,12 +22,13 @@
  * @param {{
  *   onFrame: (frame: object) => void,
  *   onExplain: (explanation: object) => void,
+ *   onGuess: (guess: object) => void,
  *   onPatch: (patch: object) => void,
  *   onCompare: (rows: object[]) => void,
  *   onFailure: (message: string) => void,
  * }} handlers
  */
-export function createEngineClient({ onFrame, onExplain, onPatch, onCompare, onFailure }) {
+export function createEngineClient({ onFrame, onExplain, onGuess, onPatch, onCompare, onFailure }) {
   const worker = new Worker(new URL('../worker/engine.worker.js', import.meta.url), {
     type: 'module',
   });
@@ -62,6 +63,11 @@ export function createEngineClient({ onFrame, onExplain, onPatch, onCompare, onF
 
     if (data.type === 'explain') {
       onExplain(data.explanation);
+      return;
+    }
+
+    if (data.type === 'guess') {
+      onGuess(data.guess);
       return;
     }
 
@@ -137,6 +143,14 @@ export function createEngineClient({ onFrame, onExplain, onPatch, onCompare, onF
     nextId += 1;
   }
 
+  /**
+   * @param {number} x @param {number} y
+   */
+  function sendGuess({ x, y }) {
+    worker.postMessage({ type: 'guess', id: nextId, x, y });
+    nextId += 1;
+  }
+
   return {
     /**
      * Ask for a frame. Safe to call on every input event.
@@ -193,6 +207,15 @@ export function createEngineClient({ onFrame, onExplain, onPatch, onCompare, onF
         return;
       }
       sendCompare(settings);
+    },
+
+    /**
+     * Ask what one pixel's missing green should be, and what it really was.
+     * Cheap enough to answer on every click, so it is not queued.
+     * @param {number} x @param {number} y
+     */
+    requestGuess(x, y) {
+      sendGuess({ x, y });
     },
 
     dispose() {

@@ -50,6 +50,7 @@ export {
 } from './develop.js';
 export { psnr, errorMap, errorStats, ARTIFACT_NOTES } from './metrics.js';
 export { EXPLAIN_RADIUS, neighbourhood, buildSentence, explainPixel } from './explain.js';
+export { guessSite, nearestColourSite } from './guess.js';
 export {
   DEFAULT_SETTINGS,
   MAX_WORKING_SIZE,

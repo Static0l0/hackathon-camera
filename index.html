@@ -166,8 +166,26 @@
             <div class="section-head">
               <h2 class="heading" id="guess-title" data-reveal>The guess</h2>
               <p class="note">
-                Four algorithms, one mosaic. Switch between them: the picture is
-                recomputed, never cross-faded from a stored result.
+                Green covers half the sensor and most of the detail, so every
+                method rebuilds green first. At a red or blue pixel there is no
+                green reading at all — the number has to be invented.
+              </p>
+            </div>
+
+            <div class="guess-demo" id="guess-demo"></div>
+
+            <div class="procedure">
+              <h3 class="subheading">Green first, then colour as a difference</h3>
+              <p class="note">
+                The second pass fills red and blue out of the red-minus-green and
+                blue-minus-green <em>differences</em>. Once green is solid, the
+                gap between two colours is smooth even where the colours
+                themselves are not, so borrowing the gap from a neighbour is a far
+                better bet than borrowing the colour.
+              </p>
+              <p class="note">
+                Nearest neighbour skips both passes and copies one neighbour
+                wholesale. That is why its edges look like zips.
               </p>
             </div>
 
@@ -197,6 +215,7 @@
                       <th scope="col">method</th>
                       <th scope="col">PSNR</th>
                       <th scope="col">colour error</th>
+                      <th scope="col">assumes</th>
                     </tr>
                   </thead>
                   <tbody id="method-table"></tbody>
@@ -204,6 +223,13 @@
                 <p class="aside" id="method-note">
                   Higher PSNR is better. Colour error is the mean miss in the
                   red-minus-green and blue-minus-green planes, in 8-bit levels.
+                </p>
+                <p class="aside" id="method-failures">
+                  What each one gets wrong: bilinear smears a diagonal edge across
+                  four pixels. Hamilton–Adams must commit to one axis, so the same
+                  edge becomes a staircase of zips. Malvar–He–Cutler smooths the
+                  error it cannot see, which lowers the average miss and blurs fine
+                  colour. Nearest neighbour does not interpolate at all.
                 </p>
               </div>
             </div>
