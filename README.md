@@ -50,8 +50,12 @@ Five sections, in the order the story needs:
 2. **Photons** — an exploded sensor, with one dot per electron the current frame
    really collected, plus light / shutter / ISO and a live signal-to-noise readout.
 3. **One colour per pixel** — the RGGB grid, and why half of it is green.
-4. **The guess** — four demosaicers, the error map, and PSNR for each method on the
-   same captured frame.
+4. **The guess** — you make it first. One red site, the four green neighbours that could
+   stand in for its missing green, and a choice between the two pairs. Then the panel
+   prices your guess against bilinear, against Hamilton–Adams, against the pair you
+   passed on, and against the value the sensor would actually have measured. Below that:
+   the two passes demosaicing really runs, four methods ranked on the same captured
+   frame, the error map, and the assumption each method rests on.
 5. **The lab** — every remaining control, every readout, and the arithmetic behind
    the pixel you clicked.
 
@@ -155,6 +159,11 @@ At the shipped defaults (384×216, ISO 100, light 40 %, σ 0.6) the page reports
   Poisson draw, so it is a sample of the truth rather than a drawing of the idea.
 - **The dot cloud reads as dust, not as countable points.** At 24×24 sites with
   hundreds of thousands of electrons, points overlap.
+- **The explanation is still partly prose.** The two passes demosaicing runs are
+  described in words and priced at one pixel; there is no frame-by-frame stepper
+  following one 24×24 patch from lens to photograph, and no switch that disables
+  Hamilton–Adams' gradient test so you can watch the zipper appear on demand. Those
+  are the two things I would build next, and section 4 says so.
 - **ISO is shown as a gain, not as a real camera's pipeline.** There is no analogue
   gain stage, no dual conversion gain, no noise reduction, no sharpening, and no
   JPEG. Real cameras do considerably more than this, which is why real cameras hide

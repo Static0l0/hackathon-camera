@@ -169,8 +169,12 @@ export function createGuessDemo({ root, onNext }) {
    */
   function renderScores(guess, direction) {
     const yours = direction === 'horizontal' ? guess.row.average : guess.column.average;
+    // The counterfactual: the pair the reader passed on, priced against the same
+    // truth. Without it the panel shows a right answer, not the cost of a wrong one.
+    const other = direction === 'horizontal' ? guess.column.average : guess.row.average;
     const rows = [
-      { key: 'you', label: 'you', value: yours },
+      { key: 'you', label: 'your pair', value: yours },
+      { key: 'other', label: 'the pair you passed on', value: other },
       { key: 'bilinear', label: 'bilinear', value: guess.bilinear },
       { key: 'hamiltonAdams', label: 'Hamilton–Adams', value: guess.hamiltonAdams },
       { key: 'truth', label: 'the sensor would have measured', value: guess.truth, isTruth: true },
