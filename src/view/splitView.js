@@ -47,6 +47,8 @@ export function createSplitView({ container, divider, painter, onPick, onHover }
     // shader can mix two textures without clipping a second element.
     container.style.setProperty('--split', `${split}%`);
     divider.setAttribute('aria-valuenow', String(Math.round(split)));
+    // "50" alone does not say 50 of what, so the slider announces a sentence.
+    divider.setAttribute('aria-valuetext', `${Math.round(split)}% raw sensor data`);
     current.setSplit(split);
   }
 
@@ -142,17 +144,20 @@ export function createSplitView({ container, divider, painter, onPick, onHover }
   const cursor = document.createElement('div');
   cursor.className = 'pick-cursor';
   cursor.hidden = true;
+  // The marker is a sighted affordance; the same information is in the loupe text.
+  cursor.setAttribute('aria-hidden', 'true');
   container.append(cursor);
 
   // Make the viewer reachable and self-describing. It is a labelled, focusable
   // region rather than an "application" role: the arrow keys are a convenience
   // on top of a normal document, not a mode that swallows the reader's own keys.
   container.tabIndex = 0;
+  if (!container.hasAttribute('role')) container.setAttribute('role', 'group');
   if (!container.hasAttribute('aria-label')) {
     container.setAttribute(
       'aria-label',
       'Image viewer: raw sensor data on the left, developed photograph on the right. ' +
-        'Arrow keys select a pixel and Enter explains it. The divider above is a separate control.',
+        'Arrow keys select a pixel and Enter explains it. The divider inside is a separate control.',
     );
   }
 
