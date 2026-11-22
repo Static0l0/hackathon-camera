@@ -54,7 +54,12 @@ jobs:
           BASE_PATH: ${{ steps.base.outputs.path }}
         run: npm run build
 
+      # `enablement: true` creates the Pages site on the first run instead of
+      # failing with "Get Pages site failed" — which is exactly what happened the
+      # first time this workflow ran against a fresh repository.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
