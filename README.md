@@ -29,6 +29,8 @@ self-hosted; the Web Worker runs from the same origin.
 
 ### Deploy
 
+**Live: https://static0l0.github.io/hackathon-camera/**
+
 `.github/workflows/deploy.yml` builds, runs the tests, and publishes `dist/` to
 GitHub Pages on every push to `main`. It works out the base path from the repository
 name, so a project page (`https://user.github.io/the-mosaic/`) and a user page
