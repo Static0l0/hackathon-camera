@@ -56,21 +56,9 @@ body {
   min-height: 100vh;
 }
 
-/* Lenis's own requirements. It animates the scroll position of the window, so
-   the stylesheet has to stop the browser from fighting it with smooth scrolling
-   or a locked height. */
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
-}
-
-.lenis.lenis-stopped {
-  overflow: hidden;
-}
+/* Lenis used to smooth the page scroll; the stack is opened by a slider now, so
+   the page uses the browser's own scrolling and these rules are gone with it.
+   ScrollTrigger (for the heading reveals) reads the native scroll position. */
 
 #app {
   max-width: var(--measure);
@@ -300,15 +288,8 @@ section + section {
 
 /* ----------------------------------------------------------------- stack -- */
 
-/* ScrollTrigger pins this block while the layers separate, so it must stay a
-   plain, untransformed block: the stylesheet positions nothing here. */
-.stack-pin {
-  position: relative;
-}
-
-/* The stage is a fixed-height window onto a 3D scene, so the scroll length (and
-   therefore how much scrolling it takes to pull the layers apart) is the same on
-   a phone as on a desktop. */
+/* The stage is a fixed-height window onto a 3D scene, so the size of the drawing
+   area is the same on a phone as on a desktop. */
 .stack-stage {
   position: relative;
   height: clamp(22rem, 52vh, 34rem);
@@ -320,6 +301,12 @@ section + section {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+/* The slider that pulls the layers apart. It sits between the stage and the
+   legend, where the thing it controls is directly above it. */
+.stack-control {
+  margin-top: 0.9rem;
 }
 
 /* The four layers, as a caption row under the stage: 01–04 is the order light

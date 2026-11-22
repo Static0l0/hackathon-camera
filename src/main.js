@@ -24,7 +24,6 @@ import { createErrorHeatmap, createMethodTable } from './view/guessPanel.js';
 import { createLoupe } from './view/loupe.js';
 import { createMotion } from './view/motion.js';
 import { createReadouts } from './view/readouts.js';
-import { createScroll } from './view/scroll.js';
 import { createSplitView } from './view/splitView.js';
 
 /*
@@ -56,7 +55,8 @@ const elements = {
   loupeCanvas: byId('loupe-canvas'),
   loupeCaption: byId('loupe-caption'),
   stackStage: byId('stack-stage'),
-  stackPin: byId('stack-pin'),
+  stackSeparation: byId('stack-separation'),
+  stackSeparationValue: byId('stack-separation-value'),
   stackCanvas: byId('stack-canvas'),
   stackReadout: byId('stack-readout'),
   captureGrid: byId('capture-grid'),
@@ -254,8 +254,8 @@ elements.viewerContainer.dataset.painter = viewer.painterKind;
 let stack = null;
 /** Side of the patch the stack draws, in pixels. Known once its module loads. */
 let patchSize = 24;
-/** Last scroll separation, so a stack that loads late still lands open. */
-let spread = 0;
+/** How far apart the layers are, 0..1. Owned by the slider, read on load. */
+let spread = 1;
 /** The frame currently on screen, so a late-loading stack can ask for its patch. */
 let currentFrame = null;
 
@@ -267,8 +267,8 @@ async function loadStack() {
       canvas: elements.stackCanvas,
       readout: elements.stackReadout,
     });
-    stack.setSpread(spread);
-    // The scroll position was already known before the stack existed; the patch
+    applySeparation(spread);
+    // The slider position was already known before the stack existed; the patch
     // for the frame on screen may also have arrived and been dropped. Re-ask.
     if (currentFrame) {
       const centre = lastPick ?? {
@@ -284,17 +284,39 @@ async function loadStack() {
   }
 }
 
-/** Scroll pulls the stack apart. Reduced motion skips straight to open. */
-createScroll({
-  pin: elements.stackPin,
-  onProgress(progress) {
-    spread = progress;
-    // Recorded on the element so the separation is inspectable (and assertable)
-    // without reaching into the renderer.
-    elements.stackStage.dataset.spread = progress.toFixed(2);
-    stack?.setSpread(progress);
-  },
+/**
+ * How separated the layers are, said in the terms the legend uses: there are
+ * four of them, and a person can hold "two of four" in their head in a way that
+ * "0.5" never manages.
+ * @param {number} value
+ * @returns {string}
+ */
+function describeSeparation(value) {
+  if (value >= 0.995) return 'fully apart';
+  if (value <= 0.005) return 'stacked shut';
+  return `${Math.round(value * 4)} of 4 apart`;
+}
+
+/**
+ * Push a separation value to the renderer, the label and the DOM.
+ * @param {number} value
+ */
+function applySeparation(value) {
+  spread = value;
+  // Recorded on the element so the separation is inspectable (and assertable)
+  // without reaching into the renderer.
+  elements.stackStage.dataset.spread = value.toFixed(2);
+  elements.stackSeparationValue.textContent = describeSeparation(value);
+  elements.stackSeparation.setAttribute('aria-valuetext', describeSeparation(value));
+  stack?.setSpread(value);
+}
+
+// The stack opens on a slider, not on scroll: the page never moves underneath
+// someone who is trying to look at something.
+elements.stackSeparation.addEventListener('input', (event) => {
+  applySeparation(Number(event.target.value));
 });
+applySeparation(spread);
 
 const client = createEngineClient({
   onFrame(frame) {

@@ -1,4 +1,4 @@
-# NOTES
+﻿# NOTES
 
 One line per function: what it takes, what it returns, and why it exists.
 Phase 1 (engine + tests, no UI). 58 tests, 5 files, all passing.
@@ -708,59 +708,66 @@ label is a short string you scan, a sentence is something you read.
 
 ---
 
-## Phase 8: the stack pins while it separates
+## Phase 8: the stack opens on a slider
 
-### The complaint
+### The complaint, twice
 
-"at the one pixel is four deep can you make it stop, then we can scroll to make it expand,
-rn we can scroll but we dont see it fully as when we scroll we also scroll pass"
+First: "at the one pixel is four deep can you make it stop, then we can scroll to make it
+expand, rn we can scroll but we dont see it fully as when we scroll we also scroll pass" —
+fair. The section animated `spread` from the moment the canvas entered the bottom of the
+screen until its bottom climbed to a quarter of the way up, so the thing you were supposed to
+watch was also leaving the frame the whole time.
 
-Fair. The section used to animate `spread` from the moment the canvas entered the bottom of
-the screen until its bottom climbed to a quarter of the way up — which means the thing you
-were supposed to be watching was also travelling up and out of the frame the whole time. You
-could scroll, or you could look, not both.
+The first answer was a `ScrollTrigger` pin: hold the block still for one and a third screens
+while the scroll bar opens it. That worked, and it was measured (0px of movement across
+1063px of scrolling). It also meant the page could not be read at its own pace: a section that
+takes over the scroll bar is a section that argues with the person reading it.
+
+Second, and final: "actually just make a slider under it." Correct. The visitor holds the
+control; the page never moves underneath them.
 
 ### What changed
 
-- `index.html`: the section head, the stage, the legend and the electron count now live in one
-  block, `#stack-pin`. Pinning has to hold the whole block, not just the canvas: pin the canvas
-  alone and the legend and the electron count scroll away while the layers are opening.
-- `src/view/scroll.js`:
-  - the trigger is the block, not the canvas. Triggering on the canvas started the pin when the
-    canvas reached the top tenth of the screen — by which point the heading was already above
-    the fold, which showed up in the first screenshot as a heading sliced in half;
-  - `pin: pinEl` with `anticipatePin: 1` and `invalidateOnRefresh: true`;
-  - `end: '+=135%'` while pinned, so one and a third screens of scrolling pull the layers apart;
-  - `gsap.matchMedia` holds two variants: pinned when the viewport is at least 640px tall, and
-    the old scroll-past behaviour below that. A pinned block taller than the screen would hide
-    its own legend, so short screens keep the behaviour that at least shows everything.
-- `src/view/sensorStack.js`: the camera drops as the stack opens
-  (`elevation = 0.74 - 0.36 * spread`). Seen from high above, the gaps between layers project
-  on top of each other and the exploded stack still read as one pile; from a lower angle the
-  gaps open across the screen. Also `aspectFit`, and `resize()` now re-frames: the vertical
-  field of view is fixed, so a narrow window saw less width and cropped both ends of the array
-  off the phone screen.
+- `index.html` — a `.control.stack-control` block between the stage and the legend:
+  `#stack-separation`, `type="range"`, `min="0" max="1" step="0.01"`, default `1`. It reuses
+  the existing control markup (`.control`, `.control-label`, `.control-value`) so it looks
+  like every other slider on the page without a line of new CSS beyond one top margin.
+- `src/main.js` — `applySeparation(value)` is now the single writer for the separation: it sets
+  `spread`, `#stack-stage.dataset.spread`, the label, `aria-valuetext`, and calls
+  `stack?.setSpread`. The `input` listener calls it; `loadStack()` calls it too, so a stack
+  that arrives late lands in the slider's current position instead of snapping to zero.
+- `describeSeparation(value)` — "fully apart" / "stacked shut" / "2 of 4 apart". The legend
+  already numbers the layers 01–04, so counting them is legible in a way that "0.5" is not.
+- `src/view/scroll.js` — deleted. With no pin there was nothing left for it to do, and the only
+  other user of Lenis was itself. `lenis` was uninstalled; the page uses native scrolling.
+  ScrollTrigger stays, for the heading reveals in `motion.js`.
+- `src/view/sensorStack.js` — the camera drops as the stack opens
+  (`elevation = 0.74 - 0.36 * spread`): from directly above, the gaps between layers project on
+  top of each other and the exploded stack still read as one pile. Framing now also respects
+  the canvas aspect (`distance = Math.max(base, size * 1.8 / aspect)`), and `resize()` re-frames,
+  because the fixed vertical field of view cropped both ends of the array off a phone.
+
+The default is fully apart, not shut. A section that arrives as a solid slab asks the visitor
+to discover a control before it shows them anything; arriving open shows the thing the section
+is about, and the slider then lets them close it and see that these four surfaces really do
+sit on top of each other. Reduced motion needs no special case any more — nothing animates
+unless a person moves the slider.
 
 ### How it was checked
 
-`scripts/probes/stack-pin-range.js` scrolls in eight steps across the pin and records the
-stage's top and the spread at each one:
+`scripts/probes/stack-slider.js` drives the element and reads back all three states:
 
-| scrollY | stage top | spread |
-|---|---|---|
-| 1330 | 183 | 0.00 |
-| 1482 | 183 | 0.13 |
-| 1634 | 183 | 0.25 |
-| 1786 | 183 | 0.38 |
-| 1938 | 183 | 0.50 |
-| 2090 | 183 | 0.63 |
-| 2241 | 183 | 0.75 |
-| 2393 | 183 | 0.87 |
-| 2545 | 183 | 1.00 |
+| slider | `data-spread` | label | `aria-valuetext` |
+|---|---|---|---|
+| 1 (initial) | 1.00 | fully apart | fully apart |
+| 0 | 0.00 | stacked shut | stacked shut |
+| 0.5 | 0.50 | 2 of 4 apart | 2 of 4 apart |
+| 1 | 1.00 | fully apart | fully apart |
 
-The stage's top moves 0px across 1063px of scrolling while the spread goes 0 to 1 — that is
-the whole point, measured rather than eyeballed. `--media=reduce` returns `pinned: false`,
-no pin spacer, and `spread: 1` from the first frame: reduced motion still skips all of it.
-390x844 pins too, and the array now fits inside the frame instead of running off both edges.
+`:focus-visible` on the slider uses the page's amber ring, and the label/value pair is the same
+one every other control uses, so it is reachable by Tab and readable by a screen reader without
+new work. Re-checked at 390x844: the whole array fits in the canvas at both ends of the travel.
 
-`npm test` 69 passed; `npm run build` 173.20 kB entry (65.20 kB gzip).
+`npm test` 69 passed. `npm run build`: entry **154.19 kB (60.10 kB gzip)**, down from 173.20 kB
+(65.20 kB) — dropping Lenis took 19 kB of bundle with it.
+

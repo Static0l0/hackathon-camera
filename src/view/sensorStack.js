@@ -341,11 +341,15 @@ export function createSensorStack({ canvas, readout }) {
     const centreY = (LAYER_Y.circuitry + LAYER_Y.photons) / 2 + open / 2;
 
     // Further back as the stack grows taller, so the apparent size stays steady.
-    // The camera's vertical field of view is fixed, so a narrow window sees less
-    // width: on a phone that cropped the left and right edges of the array off
-    // the screen. Pulling back by roughly 1/aspect puts the whole patch in frame.
-    const aspectFit = camera.aspect < 1 ? 1.15 / Math.max(camera.aspect, 0.45) : 1;
-    const distance = size * (1.05 + open * 0.062) * aspectFit;
+    const base = size * (1.05 + open * 0.062);
+
+    // The vertical field of view is fixed, so the width a frame can see is
+    // proportional to its aspect ratio. A narrow or squarish canvas therefore
+    // crops the ends off a 24-wide array (it did, on a phone). Step back until
+    // the whole patch is inside: 1 / (2 * tan(fov/2)) is the distance at which
+    // one unit of width fills one unit of height, plus a little margin.
+    const widthFit = (size * 1.8) / Math.max(camera.aspect, 0.3);
+    const distance = Math.max(base, widthFit);
 
     // The camera drops as the layers part: looked at from high above, the gaps
     // between the layers project on top of each other and the exploded stack
