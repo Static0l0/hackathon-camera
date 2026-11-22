@@ -705,3 +705,62 @@ label is a short string you scan, a sentence is something you read.
   responsive. Worth re-measuring on a quiet machine before quoting it.
 
 
+
+---
+
+## Phase 8: the stack pins while it separates
+
+### The complaint
+
+"at the one pixel is four deep can you make it stop, then we can scroll to make it expand,
+rn we can scroll but we dont see it fully as when we scroll we also scroll pass"
+
+Fair. The section used to animate `spread` from the moment the canvas entered the bottom of
+the screen until its bottom climbed to a quarter of the way up — which means the thing you
+were supposed to be watching was also travelling up and out of the frame the whole time. You
+could scroll, or you could look, not both.
+
+### What changed
+
+- `index.html`: the section head, the stage, the legend and the electron count now live in one
+  block, `#stack-pin`. Pinning has to hold the whole block, not just the canvas: pin the canvas
+  alone and the legend and the electron count scroll away while the layers are opening.
+- `src/view/scroll.js`:
+  - the trigger is the block, not the canvas. Triggering on the canvas started the pin when the
+    canvas reached the top tenth of the screen — by which point the heading was already above
+    the fold, which showed up in the first screenshot as a heading sliced in half;
+  - `pin: pinEl` with `anticipatePin: 1` and `invalidateOnRefresh: true`;
+  - `end: '+=135%'` while pinned, so one and a third screens of scrolling pull the layers apart;
+  - `gsap.matchMedia` holds two variants: pinned when the viewport is at least 640px tall, and
+    the old scroll-past behaviour below that. A pinned block taller than the screen would hide
+    its own legend, so short screens keep the behaviour that at least shows everything.
+- `src/view/sensorStack.js`: the camera drops as the stack opens
+  (`elevation = 0.74 - 0.36 * spread`). Seen from high above, the gaps between layers project
+  on top of each other and the exploded stack still read as one pile; from a lower angle the
+  gaps open across the screen. Also `aspectFit`, and `resize()` now re-frames: the vertical
+  field of view is fixed, so a narrow window saw less width and cropped both ends of the array
+  off the phone screen.
+
+### How it was checked
+
+`scripts/probes/stack-pin-range.js` scrolls in eight steps across the pin and records the
+stage's top and the spread at each one:
+
+| scrollY | stage top | spread |
+|---|---|---|
+| 1330 | 183 | 0.00 |
+| 1482 | 183 | 0.13 |
+| 1634 | 183 | 0.25 |
+| 1786 | 183 | 0.38 |
+| 1938 | 183 | 0.50 |
+| 2090 | 183 | 0.63 |
+| 2241 | 183 | 0.75 |
+| 2393 | 183 | 0.87 |
+| 2545 | 183 | 1.00 |
+
+The stage's top moves 0px across 1063px of scrolling while the spread goes 0 to 1 — that is
+the whole point, measured rather than eyeballed. `--media=reduce` returns `pinned: false`,
+no pin spacer, and `spread: 1` from the first frame: reduced motion still skips all of it.
+390x844 pins too, and the array now fits inside the frame instead of running off both edges.
+
+`npm test` 69 passed; `npm run build` 173.20 kB entry (65.20 kB gzip).

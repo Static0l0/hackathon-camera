@@ -341,9 +341,18 @@ export function createSensorStack({ canvas, readout }) {
     const centreY = (LAYER_Y.circuitry + LAYER_Y.photons) / 2 + open / 2;
 
     // Further back as the stack grows taller, so the apparent size stays steady.
-    const distance = size * (1.05 + open * 0.062);
+    // The camera's vertical field of view is fixed, so a narrow window sees less
+    // width: on a phone that cropped the left and right edges of the array off
+    // the screen. Pulling back by roughly 1/aspect puts the whole patch in frame.
+    const aspectFit = camera.aspect < 1 ? 1.15 / Math.max(camera.aspect, 0.45) : 1;
+    const distance = size * (1.05 + open * 0.062) * aspectFit;
 
-    camera.position.set(distance * 0.42, centreY + distance * 0.74, distance * 0.92);
+    // The camera drops as the layers part: looked at from high above, the gaps
+    // between the layers project on top of each other and the exploded stack
+    // reads as one pile. From a lower angle the gaps open up across the screen.
+    const elevation = 0.74 - 0.36 * spread;
+
+    camera.position.set(distance * 0.42, centreY + distance * elevation, distance * 0.92);
     camera.lookAt(0, centreY, 0);
     camera.updateProjectionMatrix();
   }
@@ -362,6 +371,8 @@ export function createSensorStack({ canvas, readout }) {
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
+    // The framing depends on the aspect ratio, so a resize has to re-frame.
+    frameCamera();
     render();
   }
 

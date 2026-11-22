@@ -1,11 +1,16 @@
 /**
  * Smooth scrolling, and the one thing it is used for: pulling the sensor stack
- * apart as it crosses the viewport.
+ * apart as the page moves.
+ *
+ * The stack is **pinned** for the length of the separation, because a stack that
+ * merely animates while it scrolls past is a stack the visitor watches leave the
+ * screen before it has finished opening. Held in place, the scroll bar becomes
+ * the control for the explosion and nothing else moves until it is done.
  *
  * Lenis and GSAP are animation tools; they move things on screen and decide
  * nothing about the image. The number they hand over (`progress`, 0..1) is the
- * only thing the renderer hears, and it is also what the "1 of 4 layers
- * separated" annotation reads.
+ * only thing the renderer hears, and it is also what the "1 dot = n electrons"
+ * annotation reads.
  *
  * If the visitor asked their system for reduced motion, none of this runs: the
  * stack sits open, which is the state that carries the information anyway. The
@@ -19,13 +24,20 @@ import Lenis from 'lenis';
 gsap.registerPlugin(ScrollTrigger);
 
 /**
+ * Below this height the pinned block would be taller than the screen, and part
+ * of it would sit under the fold for the whole pin. On those screens the stack
+ * separates as it scrolls instead — the older behaviour, which shows everything.
+ */
+const PIN_MIN_HEIGHT = 640;
+
+/**
  * @param {{
- *   stage: HTMLElement,
+ *   pin: HTMLElement,
  *   onProgress: (progress: number) => void,
  * }} options
  * @returns {{ destroy: () => void, reduced: boolean }}
  */
-export function createScroll({ stage, onProgress }) {
+export function createScroll({ pin, onProgress }) {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (reduced) {
@@ -44,21 +56,41 @@ export function createScroll({ stage, onProgress }) {
   gsap.ticker.add(tick);
   gsap.ticker.lagSmoothing(0);
 
-  const trigger = ScrollTrigger.create({
-    trigger: stage,
-    // Start when the stage's top reaches 85% of the viewport, finish when its
-    // bottom has climbed to 25%: the whole separation happens while the stack is
-    // comfortably on screen, not while it is sliding off.
-    start: 'top 85%',
-    end: 'bottom 25%',
-    scrub: true,
-    onUpdate: (self) => onProgress(self.progress),
-  });
+  // One progress source, two ways of holding the block: pinned when it fits the
+  // screen, scrolling past when it does not. matchMedia re-runs on resize, so a
+  // window dragged shorter drops the pin instead of cropping the legend.
+  const media = gsap.matchMedia();
+
+  const build = (pinned) => () => {
+    const trigger = ScrollTrigger.create({
+      // The whole block is the trigger, not just the canvas: pinning has to start
+      // when the heading arrives, or the heading is already above the fold by the
+      // time the stack stops moving.
+      trigger: pin,
+      // Start as the block's top reaches the upper tenth of the screen: heading,
+      // stack and legend are all on screen before anything moves.
+      start: 'top 10%',
+      // Hold it for a little over one screen of scrolling — long enough to look
+      // at each layer, short enough not to feel stuck.
+      end: pinned ? '+=135%' : 'bottom 25%',
+      pin: pinned ? pin : false,
+      // antialias the jump when the pin engages under Lenis smoothing.
+      anticipatePin: pinned ? 1 : 0,
+      invalidateOnRefresh: true,
+      scrub: true,
+      onUpdate: (self) => onProgress(self.progress),
+    });
+
+    return () => trigger.kill();
+  };
+
+  media.add(`(min-height: ${PIN_MIN_HEIGHT}px)`, build(true));
+  media.add(`(max-height: ${PIN_MIN_HEIGHT - 1}px)`, build(false));
 
   return {
     reduced,
     destroy() {
-      trigger.kill();
+      media.revert();
       gsap.ticker.remove(tick);
       lenis.destroy();
     },

@@ -300,6 +300,12 @@ section + section {
 
 /* ----------------------------------------------------------------- stack -- */
 
+/* ScrollTrigger pins this block while the layers separate, so it must stay a
+   plain, untransformed block: the stylesheet positions nothing here. */
+.stack-pin {
+  position: relative;
+}
+
 /* The stage is a fixed-height window onto a 3D scene, so the scroll length (and
    therefore how much scrolling it takes to pull the layers apart) is the same on
    a phone as on a desktop. */

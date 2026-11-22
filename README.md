@@ -49,6 +49,8 @@ Five sections, in the order the story needs:
    below prints the numbers that produced that pixel.
 2. **Photons** — an exploded sensor, with one dot per electron the current frame
    really collected, plus light / shutter / ISO and a live signal-to-noise readout.
+   The section pins itself while it opens, so the scroll bar pulls the layers apart
+   and the page waits until they are fully apart before moving on.
 3. **One colour per pixel** — the RGGB grid, and why half of it is green.
 4. **The guess** — you make it first. One red site, the four green neighbours that could
    stand in for its missing green, and a choice between the two pairs. Then the panel

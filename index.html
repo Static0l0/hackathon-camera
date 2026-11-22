@@ -84,26 +84,30 @@
           </div>
 
           <div class="section-body">
-            <div class="section-head">
-              <h2 class="heading" id="photons-title" data-reveal>One pixel is four layers deep</h2>
-              <p class="note">
-                Scroll to separate them. Every dot is an electron this frame
-                actually collected — not an illustration of the idea.
-              </p>
+            <!-- Pinned while it separates: the scroll bar pulls the layers apart,
+                 and the page does not move on until they are fully apart. -->
+            <div class="stack-pin" id="stack-pin">
+              <div class="section-head">
+                <h2 class="heading" id="photons-title" data-reveal>One pixel is four layers deep</h2>
+                <p class="note">
+                  Scroll to separate them. Every dot is an electron this frame
+                  actually collected — not an illustration of the idea.
+                </p>
+              </div>
+
+              <div class="stack-stage" id="stack-stage">
+                <canvas id="stack-canvas"></canvas>
+              </div>
+
+              <ol class="stack-legend">
+                <li><span class="stack-index">01</span><span class="stack-name">microlens</span> gathers light onto the diode</li>
+                <li><span class="stack-index">02</span><span class="stack-name">colour filter</span> passes one colour, blocks two</li>
+                <li><span class="stack-index">03</span><span class="stack-name">photodiode</span> counts the electrons</li>
+                <li><span class="stack-index">04</span><span class="stack-name">circuitry</span> reads the count out</li>
+              </ol>
+
+              <p class="stack-readout" id="stack-readout" role="status"></p>
             </div>
-
-            <div class="stack-stage" id="stack-stage">
-              <canvas id="stack-canvas"></canvas>
-            </div>
-
-            <ol class="stack-legend">
-              <li><span class="stack-index">01</span><span class="stack-name">microlens</span> gathers light onto the diode</li>
-              <li><span class="stack-index">02</span><span class="stack-name">colour filter</span> passes one colour, blocks two</li>
-              <li><span class="stack-index">03</span><span class="stack-name">photodiode</span> counts the electrons</li>
-              <li><span class="stack-index">04</span><span class="stack-name">circuitry</span> reads the count out</li>
-            </ol>
-
-            <p class="stack-readout" id="stack-readout" role="status"></p>
 
             <div class="capture">
               <div class="capture-controls" id="capture-grid"></div>

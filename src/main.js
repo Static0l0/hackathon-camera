@@ -56,6 +56,7 @@ const elements = {
   loupeCanvas: byId('loupe-canvas'),
   loupeCaption: byId('loupe-caption'),
   stackStage: byId('stack-stage'),
+  stackPin: byId('stack-pin'),
   stackCanvas: byId('stack-canvas'),
   stackReadout: byId('stack-readout'),
   captureGrid: byId('capture-grid'),
@@ -285,7 +286,7 @@ async function loadStack() {
 
 /** Scroll pulls the stack apart. Reduced motion skips straight to open. */
 createScroll({
-  stage: elements.stackStage,
+  pin: elements.stackPin,
   onProgress(progress) {
     spread = progress;
     // Recorded on the element so the separation is inspectable (and assertable)
