@@ -288,6 +288,7 @@
 
       <footer class="colophon">
         <p class="compute-note" id="compute-note">computed in your browser</p>
+        <button class="sound-toggle" id="sound-toggle" aria-pressed="false">sound off</button>
         <p class="colophon-note">
           No network requests after load. No server. The physics, the noise and
           the interpolation all run in a Web Worker on this device.
@@ -296,5 +297,27 @@
     </div>
 
     <script type="module" src="/src/main.js"></script>
+
+    <!-- Loading state: shown until the first frame paints, then removed. -->
+    <div id="loading" role="status" aria-live="polite" aria-busy="true">
+      <p>computing first frame…</p>
+    </div>
+
+    <!-- Help overlay: a short "how to use" that stays out of the way. -->
+    <div id="help" class="help-panel" role="dialog" aria-modal="true" aria-label="How to use" hidden>
+      <div class="help-inner">
+        <button id="help-close" class="help-close" aria-label="close help">✕</button>
+        <h2 class="help-title">how to use</h2>
+        <ul class="help-list">
+          <li>Drag the divider to compare raw sensor data with the developed photograph.</li>
+          <li>Click any pixel — or tab to the image and use the arrow keys — to see the arithmetic behind it.</li>
+          <li>Move the sliders to change light, shutter, ISO, aperture, and the demosaic method.</li>
+          <li>Turn sound on with the toggle in the footer.</li>
+        </ul>
+        <p class="help-hint">The divider and every slider are keyboard-operable. <code>prefers-reduced-motion</code> disables animation and grain.</p>
+      </div>
+    </div>
+
+    <button id="help-toggle" class="help-toggle" aria-expanded="false">help</button>
   </body>
 </html>

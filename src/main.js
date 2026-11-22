@@ -12,9 +12,9 @@
  */
 
 import './style.css';
+import { createSound } from './audio.js';
 
-import { DEFAULT_SETTINGS, nearestColourSite } from './engine/index.js';
-import { createBayerDiagram } from './view/bayerDiagram.js';
+import { DEFAULT_SETTINGS, nearestColourSite } from './engine/index.js';import { createBayerDiagram } from './view/bayerDiagram.js';
 import { createCanvasPainter } from './view/canvasPainter.js';
 import { createEngineClient } from './view/client.js';
 import { createControls } from './view/controls.js';
@@ -117,14 +117,119 @@ async function upgradeToWebgl(viewer) {
   }
 }
 
+/**
+ * Shareable state: settings are written to the URL hash so a judge or a friend
+ * can reload the page and see the exact same frame. Keys match DEFAULT_SETTINGS.
+ * Only values that differ from the default are written, keeping the hash short.
+ */
+
+const SETTING_KEYS = [
+  'sceneName', 'lightLevel', 'shutterSeconds', 'fNumber', 'iso', 'seed',
+  'olpfSigma', 'method', 'greenRule', 'whiteBalance',
+];
+
+function readSettingsFromHash() {
+  const match = window.location.hash.match(/^#?\?(.*)$/);
+  if (!match) return {};
+  const params = new URLSearchParams(match[1]);
+  const out = {};
+  for (const key of SETTING_KEYS) {
+    const value = params.get(key);
+    if (value === null) continue;
+    const defaultValue = DEFAULT_SETTINGS[key];
+    if (typeof defaultValue === 'number') out[key] = Number(value);
+    else if (typeof defaultValue === 'boolean') out[key] = value === '1';
+    else out[key] = value;
+  }
+  return out;
+}
+
+function writeSettingsToHash(next) {
+  const params = new URLSearchParams();
+  let wrote = false;
+  for (const key of SETTING_KEYS) {
+    const value = next[key];
+    const defaultValue = DEFAULT_SETTINGS[key];
+    if (value === defaultValue) continue;
+    params.set(key, typeof value === 'boolean' ? (value ? '1' : '0') : String(value));
+    wrote = true;
+  }
+  if (wrote) window.location.hash = `?${params.toString()}`;
+  else window.location.hash = '';
+}
+
 /** @type {object} */
-const settings = { ...DEFAULT_SETTINGS };
+const settings = { ...DEFAULT_SETTINGS, ...readSettingsFromHash() };
+
+/** Debounce timer for hash writes — settings change while sliders drag. */
+let hashTimer = 0;
+function syncHash() {
+  window.clearTimeout(hashTimer);
+  hashTimer = window.setTimeout(() => writeSettingsToHash(settings), 300);
+}
+
+/** The loading overlay, shown until the first frame paints. */
+const loading = document.getElementById('loading');
+
+/** The metrics live region, for screen-reader announcements. */
+const metricsLive = document.getElementById('metrics-live')
+  ?? (() => {
+    const el = document.createElement('div');
+    el.id = 'metrics-live';
+    el.setAttribute('aria-live', 'polite');
+    el.setAttribute('aria-atomic', 'true');
+    document.body.appendChild(el);
+    return el;
+  })();
 
 /** The pixel last clicked, or null. Re-explained after every new frame. */
 let lastPick = null;
 
+/** The first frame has not painted yet — used for the shutter sound. */
+let firstFrame = true;
+
 const motion = createMotion();
 motion.reveal([...document.querySelectorAll('[data-reveal]')]);
+
+/** Sound: off by default, turned on by the visitor. */
+const sound = createSound();
+const soundToggle = document.getElementById('sound-toggle');
+if (soundToggle) {
+  soundToggle.textContent = sound.isEnabled() ? 'sound on' : 'sound off';
+  soundToggle.setAttribute('aria-pressed', sound.isEnabled());
+  soundToggle.addEventListener('click', () => {
+    sound.toggle();
+    soundToggle.textContent = sound.isEnabled() ? 'sound on' : 'sound off';
+    soundToggle.setAttribute('aria-pressed', sound.isEnabled());
+    if (sound.isEnabled()) sound.play('tap');
+  });
+}
+
+/** Help overlay: toggled by a fixed button, dismissed by its close button. */
+const helpToggle = document.getElementById('help-toggle');
+const helpPanel = document.getElementById('help');
+const helpClose = document.getElementById('help-close');
+if (helpToggle && helpPanel && helpClose) {
+  helpToggle.addEventListener('click', () => {
+    const hidden = helpPanel.hasAttribute('hidden');
+    helpPanel.toggleAttribute('hidden');
+    helpToggle.setAttribute('aria-expanded', String(hidden));
+    if (hidden) helpClose.focus();
+  });
+  helpClose.addEventListener('click', () => {
+    helpPanel.setAttribute('hidden', '');
+    helpToggle.setAttribute('aria-expanded', 'false');
+    helpToggle.focus();
+  });
+  // Clicking the dimmed backdrop dismisses the panel.
+  helpPanel.addEventListener('click', (event) => {
+    if (event.target === helpPanel) helpClose.click();
+  });
+  // Escape always closes it.
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !helpPanel.hasAttribute('hidden')) helpClose.click();
+  });
+}
 
 const loupe = createLoupe({
   root: elements.loupeRoot,
@@ -196,7 +301,17 @@ function onChange(patch) {
   client.requestFrame(settings, { metrics: false });
   scheduleSettle();
   scheduleCompare();
+  syncHash();
+
+  // A soft mechanical tap when a control is touched. Throttled so a slider drag
+  // does not turn into a buzz; the sound is still there, just spaced out.
+  const now = performance.now();
+  if (!onChange.lastTap || now - onChange.lastTap > 150) {
+    sound.play('tap');
+    onChange.lastTap = now;
+  }
 }
+onChange.lastTap = 0;
 
 const controls = [
   createControls({ root: elements.captureGrid, settings, onChange, group: 'capture' }),
@@ -245,6 +360,20 @@ const viewer = createSplitView({
     }
     loupe.show(frame, pixel.x, pixel.y, event);
   },
+});
+
+// A tap-ring on the viewer: a brief amber circle where the reader clicked,
+// like the safelight marking the enlarger's aim. Removed when the animation ends.
+elements.viewerContainer.addEventListener('click', (event) => {
+  const rect = elements.viewerContainer.getBoundingClientRect();
+  const ring = document.createElement('div');
+  ring.className = 'tap-ring';
+  ring.style.left = `${event.clientX - rect.left}px`;
+  ring.style.top = `${event.clientY - rect.top}px`;
+  ring.style.width = '4px';
+  ring.style.height = '4px';
+  elements.viewerContainer.appendChild(ring);
+  ring.addEventListener('animationend', () => ring.remove(), { once: true });
 });
 
 /** @type {number} */
@@ -335,12 +464,27 @@ const client = createEngineClient({
     bayer.update(frame.coverage);
     heatmap.update(frame);
 
+    // The first frame is the shutter: the sensor is exposed and the picture appears.
+    if (firstFrame) {
+      firstFrame = false;
+      sound.play('shutter');
+      if (loading) loading.setAttribute('hidden', '');
+    }
+
     // Numbers settle only when the scores arrive. During a drag the frame is
     // computed without metrics, so a settle on every frame would flicker; this
     // fires once per burst, on the frame that carries the real scores.
     if (frame.metrics.psnr !== null) {
       motion.settle(elements.readoutsGrid);
       motion.settle(elements.photonsReadout);
+      // A soft develop hum when the reconstruction is finished — like a print
+      // appearing in the developer tray.
+      sound.play('develop');
+
+      // Tell screen readers what changed, so a non-sighted visitor knows the
+      // numbers are fresh and not stale.
+      metricsLive.textContent =
+        `Frame ready. PSNR ${frame.metrics.psnr.toFixed(2)} dB, colour error ${frame.metrics.chromaError.toFixed(2)}.`;
     }
 
     elements.computeNote.textContent =
@@ -392,6 +536,8 @@ const client = createEngineClient({
 
   onFailure(message) {
     elements.viewerStatus.textContent = `engine error: ${message}`;
+    sound.play('error');
+    metricsLive.textContent = `Engine error: ${message}`;
   },
 });
 
@@ -434,6 +580,13 @@ function nextGuessSite() {
 client.requestFrame(settings);
 scheduleCompare();
 syncControls();
+syncHash();
+
+// Fallback: if the engine never responds, do not leave the visitor staring at
+// the loading screen. Show the page after 8 seconds so the rest stays usable.
+window.setTimeout(() => {
+  if (loading && !loading.hasAttribute('hidden')) loading.setAttribute('hidden', '');
+}, 8000);
 
 // Then the two three.js consumers, in the background. Both are enhancements: the
 // page is already interactive and already correct without them.

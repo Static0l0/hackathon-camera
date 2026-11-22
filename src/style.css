@@ -1418,3 +1418,345 @@ input[type='checkbox'] {
 .control.is-inactive select {
   cursor: not-allowed;
 }
+
+/* ---------------------------------------------------------------------------
+   Phase X: sound & atmosphere — darkroom tactility, kept optional.
+   --------------------------------------------------------------------------- */
+
+/* Subtle film grain, like a contact sheet in the darkroom. Off when the user
+   asks for reduced motion, because a shimmering texture is noise they did not ask for. */
+@media (prefers-reduced-motion: no-preference) {
+  #app {
+    position: relative;
+    isolation: isolate;
+  }
+  #app::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+/* The sound switch: a hairline button in the colophon, amber when on. */
+.sound-toggle {
+  grid-column: 12;
+  justify-self: end;
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.65rem;
+  margin: 0;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.sound-toggle:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.sound-toggle[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(245, 179, 1, 0.06);
+}
+
+.sound-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A tap on the viewer leaves a brief amber ring, like the safelight marking
+   where the enlarger head is pointed. Drawn by JS, removed after the animation. */
+.tap-ring {
+  position: absolute;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 4;
+  animation: tap-ring 0.55s ease-out forwards;
+}
+
+@keyframes tap-ring {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(140);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap-ring {
+    animation: none;
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Loading state — shown until the first frame arrives, then removed.
+   --------------------------------------------------------------------------- */
+
+#loading {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: var(--ground);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+#loading[hidden] {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Help panel — a short "how to use" that stays out of the way.
+   --------------------------------------------------------------------------- */
+
+.help-toggle {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+  background: var(--ground-raised);
+  border: 1px solid var(--rule);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+}
+
+.help-toggle:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.help-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.help-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  background: rgba(12, 12, 11, 0.92);
+}
+
+.help-panel[hidden] {
+  display: none;
+}
+
+.help-inner {
+  position: relative;
+  max-width: 42rem;
+  padding: clamp(2rem, 6vw, 3rem) clamp(1.5rem, 4vw, 2.5rem);
+  border: 1px solid var(--rule);
+  background: var(--ground);
+}
+
+.help-close {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 1rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.help-close:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.help-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.help-title {
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.1;
+  margin: 0 0 1rem;
+  color: var(--text);
+}
+
+.help-list {
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  line-height: 1.8;
+}
+
+.help-list li {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+  text-indent: -1.25rem;
+}
+
+.help-list li::before {
+  content: '▹';
+  color: var(--accent);
+  padding-right: 0.5rem;
+}
+
+.help-hint {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--text-dim);
+  font-family: var(--mono);
+}
+
+.help-hint code {
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------------------
+   Mobile touch targets — guess cells and buttons need to be finger-friendly.
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 40rem) {
+  .guess-cell {
+    min-height: 3.5rem;
+    font-size: 0.875rem;
+  }
+
+  .guess-choice,
+  .guess-next {
+    min-height: 3rem;
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .guess-window {
+    gap: 3px;
+  }
+}
+
+/* Screen-reader live region for metric announcements. Visually hidden, present. */
+#metrics-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Phase X: sound & atmosphere — darkroom tactility, kept optional.
+   --------------------------------------------------------------------------- */
+
+/* Subtle film grain, like a contact sheet in the darkroom. Off when the user
+   asks for reduced motion, because a shimmering texture is noise they did not ask for. */
+@media (prefers-reduced-motion: no-preference) {
+  #app {
+    position: relative;
+    isolation: isolate;
+  }
+  #app::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+/* The sound switch: a hairline button in the colophon, amber when on. */
+.sound-toggle {
+  grid-column: 12;
+  justify-self: end;
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.65rem;
+  margin: 0;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.sound-toggle:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.sound-toggle[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(245, 179, 1, 0.06);
+}
+
+.sound-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A tap on the viewer leaves a brief amber ring, like the safelight marking
+   where the enlarger head is pointed. Drawn by JS, removed after the animation. */
+.tap-ring {
+  position: absolute;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 4;
+  animation: tap-ring 0.55s ease-out forwards;
+}
+
+@keyframes tap-ring {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(140);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap-ring {
+    animation: none;
+    display: none;
+  }
+}
