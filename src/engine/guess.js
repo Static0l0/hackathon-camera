@@ -54,7 +54,7 @@ function window5(mosaic, mask, width, height, x, y) {
  * @returns {object} `kind: 'guessed'` for a red or blue site, `'measured'` for a
  *   green one (where there is nothing to guess).
  */
-export function guessSite({ mosaic, mask, width, height, reference, x, y }) {
+export function guessSite({ mosaic, mask, width, height, reference, x, y, greenRule = 'gradient' }) {
   if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= width || y >= height) {
     throw new Error(`guessSite: (${x}, ${y}) is outside ${width}x${height}`);
   }
@@ -68,7 +68,9 @@ export function guessSite({ mosaic, mask, width, height, reference, x, y }) {
     return { kind: 'measured', x, y, channel, channelName, measured: mosaic[index] };
   }
 
-  const ha = greenAtColourSite(mosaic, width, height, x, y);
+  // The same rule the frame was built with, so the panel cannot quote a number the
+  // picture did not use.
+  const ha = greenAtColourSite(mosaic, width, height, x, y, greenRule);
 
   // Bilinear does not choose a direction: it averages the four green neighbours.
   const bilinear = (ha.left + ha.right + ha.up + ha.down) / 4;
@@ -97,6 +99,8 @@ export function guessSite({ mosaic, mask, width, height, reference, x, y }) {
     column: { average: (ha.up + ha.down) / 2, estimate: ha.vertical, gradient: ha.dV },
     // 'horizontal' means it trusted the row; the panel says "along the row".
     direction: ha.direction,
+    forced: ha.forced,
+    greenRule,
     bilinear,
     hamiltonAdams: ha.value,
     truth,

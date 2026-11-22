@@ -86,7 +86,8 @@ export function buildSentence(channel, channels) {
  *
  * @param {{
  *   mosaic: Float32Array, mask: Uint8Array, width: number, height: number,
- *   x: number, y: number, method: string, detail?: object|null
+ *   x: number, y: number, method: string, detail?: object|null,
+ *   greenRule?: string
  * }} options
  * @returns {{
  *   x: number, y: number,
@@ -97,7 +98,7 @@ export function buildSentence(channel, channels) {
  *   sentence: string
  * }} */
 export function explainPixel(options) {
-  const { mosaic, mask, width, height, x, y, method, detail = null } = options;
+  const { mosaic, mask, width, height, x, y, method, detail = null, greenRule } = options;
   if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= width || y >= height) {
     throw new Error(`explainPixel: (${x}, ${y}) is outside ${width}x${height}`);
   }
@@ -106,7 +107,9 @@ export function explainPixel(options) {
 
   // The method's own intermediates. Not a re-implementation: the same module that
   // reconstructed the image answers the question.
-  const explanation = explainWith(method, mosaic, mask, width, height, x, y, detail);
+  const explanation = explainWith(method, mosaic, mask, width, height, x, y, detail, {
+    greenRule,
+  });
   const info = methodInfo(method) || { id: method, label: method, year: '', blurb: '' };
 
   return {

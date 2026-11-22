@@ -162,6 +162,7 @@ function handleExplain({ id, x, y }) {
       y,
       method: lastFrame.settings.method,
       detail: lastFrame.demosaic.detail,
+      greenRule: lastFrame.settings.greenRule,
     });
     postMessage({ type: 'explain', id, explanation });
   } catch (error) {
@@ -191,6 +192,7 @@ function handleGuess({ id, x, y }) {
       reference: lastFrame.reference.linear,
       x,
       y,
+      greenRule: lastFrame.settings.greenRule,
     });
     postMessage({ type: 'guess', id, guess });
   } catch (error) {

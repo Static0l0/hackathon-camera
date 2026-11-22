@@ -49,15 +49,20 @@ Five sections, in the order the story needs:
 1. **The hook** — a draggable divider between what the sensor actually recorded and
    the photograph you would have been shown. Drag it; click any pixel and the panel
    below prints the numbers that produced that pixel.
-2. **Photons** — an exploded sensor, with one dot per electron the current frame
-   really collected, and a slider that pulls the four layers apart and back together.
+2. **Photons** — an exploded sensor, with a cloud of dots built from the electrons the
+   current frame really collected, and a slider that pulls the four layers apart and
+   back together. A pixel collects hundreds of electrons, so the cloud is sampled when
+   there are too many to draw; the exchange rate (`1 dot = 50 electrons`) is printed
+   under it rather than hidden.
 3. **One colour per pixel** — the RGGB grid, and why half of it is green.
 4. **The guess** — you make it first. One red site, the four green neighbours that could
    stand in for its missing green, and a choice between the two pairs. Then the panel
    prices your guess against bilinear, against Hamilton–Adams, against the pair you
    passed on, and against the value the sensor would actually have measured. Below that:
    the two passes demosaicing really runs, four methods ranked on the same captured
-   frame, the error map, and the assumption each method rests on.
+   frame, the error map, and the assumption each method rests on. A **green rule** menu
+   switches the gradient test off — force one axis, or drop the axis question and
+   average all four — and the error map changes shape while you watch.
 5. **The lab** — every remaining control, every readout, and the arithmetic behind
    the pixel you clicked.
 
@@ -154,18 +159,22 @@ At the shipped defaults (384×216, ISO 100, light 40 %, σ 0.6) the page reports
 - **PSNR is not the whole story.** It is measured against a reference that includes
   the optical low-pass (the demosaicer cannot undo the lens) and excludes white
   balance (a global gain would flatter or punish methods for reasons unrelated to
-  interpolation). Absolute numbers therefore depend on those choices.
+  interpolation). Absolute numbers therefore depend on those choices — and on the
+  zone plate, switching the gradient test off and forcing one axis *raises* the score
+  (31.63 dB against 29.78 dB) while producing visible bands, because a radial pattern
+  has no single correct axis and PSNR averages the damage away. The page says so under
+  the table instead of letting the number argue the opposite case.
 - **The photon cloud is sampled.** One dot is one electron only when a frame is
   small enough; above that a ladder (`1, 2, 5, 10, 20, 50, 100, 200`) kicks in and the
   readout states the ratio. The dot *pattern* still comes from the engine's own
   Poisson draw, so it is a sample of the truth rather than a drawing of the idea.
-- **The dot cloud reads as dust, not as countable points.** At 24×24 sites with
-  hundreds of thousands of electrons, points overlap.
+  A pixel holds hundreds of electrons, so a one-dot-each picture of a 24×24 patch would
+  be a fog: the budget is deliberately below that, and the exchange rate is printed.
 - **The explanation is still partly prose.** The two passes demosaicing runs are
-  described in words and priced at one pixel; there is no frame-by-frame stepper
-  following one 24×24 patch from lens to photograph, and no switch that disables
-  Hamilton–Adams' gradient test so you can watch the zipper appear on demand. Those
-  are the two things I would build next, and section 4 says so.
+  described in words and priced at one pixel, and the gradient test can be switched
+  off to watch the artefacts change shape — but there is no frame-by-frame stepper
+  following one 24×24 patch from lens to photograph. That is the thing I would build
+  next, and section 4 says so.
 - **ISO is shown as a gain, not as a real camera's pipeline.** There is no analogue
   gain stage, no dual conversion gain, no noise reduction, no sharpening, and no
   JPEG. Real cameras do considerably more than this, which is why real cameras hide

@@ -771,3 +771,86 @@ new work. Re-checked at 390x844: the whole array fits in the canvas at both ends
 `npm test` 69 passed. `npm run build`: entry **154.19 kB (60.10 kB gzip)**, down from 173.20 kB
 (65.20 kB) — dropping Lenis took 19 kB of bundle with it.
 
+
+## Phase 9: the switch that turns the test off, and a cloud you can see through
+
+Asked for: a way to force Hamilton-Adams' green pairing so the gradient test can be
+switched off, and a fix for the photon cloud, which read as dust rather than as
+light.
+
+### The switch
+
+greenAtColourSite() gained a fourth argument, ule, with four values:
+
+- gradient — the published algorithm (default; behaviour unchanged).
+- horizontal / ertical — always take that pair, whatever the image is doing.
+- verage — no axis at all: the mean of the four green neighbours, with no
+  curvature correction either.
+
+The rule travels by one path and only one: settings.greenRule ->
+unPipeline -> demosaicWith -> demosaicHamiltonAdams -> greenAtColourSite,
+and back out through explainWith/explainPixel/guessSite so the panels quote
+the numbers the picture used. compareMethods passes it too, or the table would
+score a reconstruction nobody is looking at. detail.greenRule remembers which
+rule built the green plane, so an explanation cannot drift from its image.
+
+greenAtColourSite also now returns verage and orced, so a caller can tell
+"the test chose this" from "the test was switched off and this is what it left".
+
+The menu greys out unless Hamilton-Adams is selected (main.js syncControls),
+because a control that changes nothing is worse than no control.
+
+### The honest part
+
+On the zone plate at 384x216 the scores are:
+
+| rule | PSNR |
+|---|---|
+| pick the cheaper direction (default) | 29.78 dB |
+| always the column | 31.63 dB |
+| always the row | 25.30 dB |
+| average all four | 24.00 dB |
+
+Forcing the column scores *higher* than the adaptive rule. That is not a bug in the
+demosaicer; it is what PSNR does to a radial pattern with no single correct axis.
+So the table now carries a caveat when the rule is not gradient, and a test
+asserts the inversion explicitly (	ests/greenRule.test.js) so nobody can quietly
+"fix" the maths to make the story tidier. What the error map shows is the part the
+score hides: with the row forced, the error draws vertical bands (the zipper);
+with the gradient test on, it draws the rings the rule is actually trying to
+resolve.
+
+### The cloud
+
+POINT_BUDGET 45,000 -> 18,000, dot size 1.6 -> 1.35 px, opacity 0.55 -> 0.42,
+vertical jitter 0.6 -> 0.34 of a cell.
+
+The reasoning, written into the source: a pixel collects hundreds of electrons, so
+a one-dot-per-electron picture of a 24x24 patch is 860,000 points, and a fog of
+points is not evidence of anything. The budget buys dots that stay separately
+visible — tens per cell — and the readout states the exchange rate. At default
+exposure: 859,703 electrons · 17,209 dots, 1 dot = 50 electrons. At 12% light:
+1 dot = 20. At 4%: 1 dot = 5.
+
+The section note said "every dot is an electron", which stopped being true the
+moment the count is sampled. It now says the cloud is real counts, sampled when
+there are too many to draw, with the exchange rate printed underneath.
+
+### Verified
+
+- 
+pm test 80 passed (10 new in 	ests/greenRule.test.js: the four rules against
+  hand-computed values on a synthetic vertical edge, flat-field agreement, green
+  sites untouched, the rule reaching detail, the picture changing, the three
+  scores differing, and the PSNR inversion recorded).
+- Browser, zone plate, driven over CDP: gradient 29.8 dB, forced column 31.6 dB,
+  average 24.0 dB; error map caption   to 98 levels · mean 3.70; the caveat
+  appears under the table only when the rule is not gradient.
+- 390x844: three selects stack, scrollWidth == clientWidth, control 358 px wide.
+- Build: 155.47 kB entry (60.58 kB gzip).
+
+### Known at the end of Phase 9
+
+- The forced-rule error map is the argument, but it is small on a phone.
+- The cloud still merges to solid where the sunlight is; that is what 50 electrons
+  per dot looks like at the top of the range.

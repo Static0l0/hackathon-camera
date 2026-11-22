@@ -39,6 +39,7 @@ export {
 } from './exposure.js';
 export { DEMOSAIC_METHODS, METHOD_IDS, methodInfo, demosaicWith, explainWith } from './demosaic/index.js';
 export { DEMOSAIC_METHODS as METHODS } from './demosaic/index.js';
+export { GREEN_RULES, greenAtColourSite } from './demosaic/hamiltonAdams.js';
 export { GR_GB, RG_RB_BG_BR, RB_BB_BR_RR } from './demosaic/malvarHeCutler.js';
 export {
   UNIT_GAINS,

@@ -1405,3 +1405,16 @@ input[type='checkbox'] {
   }
 }
 
+
+/* ---------------------------------------------------------------------------
+   Phase 9: the switch that turns the green test off.
+   A select that changes nothing would be a lie, so it dims when the chosen
+   demosaicer ignores it. Dimmed is not hidden: the value stays readable.
+   --------------------------------------------------------------------------- */
+.control.is-inactive {
+  opacity: 0.45;
+}
+
+.control.is-inactive select {
+  cursor: not-allowed;
+}

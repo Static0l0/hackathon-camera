@@ -12,7 +12,15 @@
  * value so a screen reader says "1/60 s" and not "4".
  */
 
-import { DEMOSAIC_METHODS, SCENE_INFO, SCENE_NAMES } from '../engine/index.js';
+import { DEMOSAIC_METHODS, GREEN_RULES, SCENE_INFO, SCENE_NAMES } from '../engine/index.js';
+
+/** How each green rule is written on screen. Short: the menu is narrow. */
+const GREEN_RULE_LABELS = {
+  gradient: 'Pick the cheaper direction',
+  horizontal: 'Always the row',
+  vertical: 'Always the column',
+  average: 'Average all four',
+};
 
 /** Shutter speeds, in seconds, in the order a camera shows them. */
 export const SHUTTER_SPEEDS = [
@@ -101,6 +109,17 @@ const CONTROLS = [
     type: 'select',
     options: DEMOSAIC_METHODS.map((method) => method.id),
     format: (v) => DEMOSAIC_METHODS.find((method) => method.id === v)?.label ?? v,
+  },
+  {
+    // The switch that turns the gradient test off. Only Hamilton-Adams reads it,
+    // so `main.js` greys this out when another method is selected -- a control
+    // that does nothing is worse than no control.
+    key: 'greenRule',
+    group: 'reconstruct',
+    label: 'Green rule',
+    type: 'select',
+    options: GREEN_RULES,
+    format: (v) => GREEN_RULE_LABELS[v] ?? v,
   },
   {
     key: 'olpfSigma',

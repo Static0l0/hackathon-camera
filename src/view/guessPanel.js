@@ -100,15 +100,18 @@ export function createErrorHeatmap({ canvas, caption }) {
  * a fourth column: at this width a four-word assumption wrapped to four lines per
  * row and turned a three-number comparison into a wall.
  *
+/**
  * @param {{tbody: HTMLElement, note?: HTMLElement}} options
- * @returns {{update: (rows: object[], activeId: string) => void}}
+ * @returns {{update: (rows: object[], activeId: string, caveat?: string|null) => void}}
  */
 export function createMethodTable({ tbody, note }) {
   /**
    * @param {object[]} rows
    * @param {string} activeId
+   * @param {string|null} [caveat] something true about this frame that the score
+   *   alone hides -- used when the gradient test is switched off
    */
-  function update(rows, activeId) {
+  function update(rows, activeId, caveat = null) {
     if (!rows || rows.length === 0) return;
 
     const scores = rows.map((row) => row.psnr);
@@ -150,7 +153,8 @@ export function createMethodTable({ tbody, note }) {
     if (note) {
       const first = rows.find((row) => row.id === activeId);
       note.textContent = first
-        ? `${first.label}: ${first.psnr.toFixed(2)} dB on this frame. Highest wins; the bars are ranked, not absolute.`
+        ? `${first.label}: ${first.psnr.toFixed(2)} dB on this frame. Highest wins; the bars are ranked, not absolute.` +
+          (caveat ? ` ${caveat}` : '')
         : note.textContent;
     }
   }

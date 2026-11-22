@@ -41,6 +41,20 @@ function at(mosaic, width, height, x, y) {
 }
 
 /**
+ * How the green estimate chooses a direction.
+ *
+ * 'gradient' is the real algorithm. The other three exist so a visitor can switch
+ * the test off and watch the zipper appear: 'horizontal' and 'vertical' always
+ * take one axis whatever the image is doing, and 'average' ignores the axis
+ * question completely and means the four green neighbours.
+ *
+ * @typedef {'gradient'|'horizontal'|'vertical'|'average'} GreenRule
+ */
+
+/** Every rule the UI may ask for, in menu order. @type {GreenRule[]} */
+export const GREEN_RULES = ['gradient', 'horizontal', 'vertical', 'average'];
+
+/**
  * Green at a red or blue site, by direction-adaptive interpolation.
  *
  * Kept as its own function so the explanation panel can call exactly this code
@@ -48,15 +62,17 @@ function at(mosaic, width, height, x, y) {
  *
  * @param {Float32Array} mosaic @param {number} width @param {number} height
  * @param {number} x @param {number} y
+ * @param {GreenRule} [rule] how to choose; 'gradient' is the published algorithm
  * @returns {{
  *   value: number, dH: number, dV: number,
  *   direction: 'horizontal'|'vertical'|'equal',
- *   horizontal: number, vertical: number,
+ *   forced: boolean,
+ *   horizontal: number, vertical: number, average: number,
  *   left: number, right: number, up: number, down: number,
  *   left2: number, right2: number, up2: number, down2: number,
  *   centre: number
  * }} */
-export function greenAtColourSite(mosaic, width, height, x, y) {
+export function greenAtColourSite(mosaic, width, height, x, y, rule = 'gradient') {
   const centre = at(mosaic, width, height, x, y);
   const left = at(mosaic, width, height, x - 1, y);
   const right = at(mosaic, width, height, x + 1, y);
@@ -77,10 +93,27 @@ export function greenAtColourSite(mosaic, width, height, x, y) {
 
   const horizontal = (left + right) / 2 + lapH / 4;
   const vertical = (up + down) / 2 + lapV / 4;
+  // The switch-off case: no axis, no curvature correction, just the four green
+  // neighbours. On a vertical edge this is the guess that crosses it.
+  const average = (left + right + up + down) / 4;
 
   let value;
   let direction;
-  if (dH < dV) {
+  let forced = false;
+
+  if (rule === 'horizontal') {
+    value = horizontal;
+    direction = 'horizontal';
+    forced = true;
+  } else if (rule === 'vertical') {
+    value = vertical;
+    direction = 'vertical';
+    forced = true;
+  } else if (rule === 'average') {
+    value = average;
+    direction = 'equal';
+    forced = true;
+  } else if (dH < dV) {
     value = horizontal;
     direction = 'horizontal';
   } else if (dV < dH) {
@@ -96,8 +129,10 @@ export function greenAtColourSite(mosaic, width, height, x, y) {
     dH,
     dV,
     direction,
+    forced,
     horizontal,
     vertical,
+    average,
     left,
     right,
     up,
@@ -119,9 +154,10 @@ export function greenAtColourSite(mosaic, width, height, x, y) {
  *
  * @param {Float32Array} mosaic @param {Uint8Array} mask
  * @param {number} width @param {number} height
+ * @param {GreenRule} [rule] how the green estimate chooses a direction
  * @returns {{rgb: Float32Array, green: Float32Array}} linear RGB plus the green plane,
  *   which the explanation panel needs and which costs nothing to return. */
-export function demosaicHamiltonAdams(mosaic, mask, width, height) {
+export function demosaicHamiltonAdams(mosaic, mask, width, height, rule = 'gradient') {
   const green = new Float32Array(width * height);
 
   // Pass 1: green at every pixel. At a green site it is already measured.
@@ -131,7 +167,7 @@ export function demosaicHamiltonAdams(mosaic, mask, width, height) {
       if (mask[i] === GREEN) {
         green[i] = mosaic[i];
       } else {
-        green[i] = greenAtColourSite(mosaic, width, height, x, y).value;
+        green[i] = greenAtColourSite(mosaic, width, height, x, y, rule).value;
       }
     }
   }
@@ -198,22 +234,30 @@ export function demosaicHamiltonAdams(mosaic, mask, width, height) {
  * @param {Float32Array} mosaic @param {Uint8Array} mask
  * @param {number} width @param {number} height @param {number} x @param {number} y
  * @param {Float32Array} green the plane returned by demosaicHamiltonAdams
+ * @param {GreenRule} [rule] the same rule the plane was built with
  * @returns {object} */
-export function explainHamiltonAdamsPixel(mosaic, mask, width, height, x, y, green) {
+export function explainHamiltonAdamsPixel(mosaic, mask, width, height, x, y, green, rule = 'gradient') {
   const i = y * width + x;
   const own = mask[i];
   const channels = [];
 
   if (own !== GREEN) {
-    const step = greenAtColourSite(mosaic, width, height, x, y);
+    const step = greenAtColourSite(mosaic, width, height, x, y, rule);
+    let formula;
+    if (rule === 'average') {
+      formula = 'no axis chosen: the mean of the four green neighbours';
+    } else if (rule === 'horizontal' || rule === 'vertical') {
+      formula = `forced ${rule}: the gradient test is switched off, so the same pair is used everywhere`;
+    } else if (step.direction === 'equal') {
+      formula = 'dH equals dV: average both directions';
+    } else {
+      formula = `interpolated ${step.direction === 'horizontal' ? 'horizontally' : 'vertically'} because that gradient is smaller`;
+    }
     channels.push({
       channel: 1,
       measured: false,
       value: step.value,
-      formula:
-        step.direction === 'equal'
-          ? 'dH equals dV: average both directions'
-          : `interpolated ${step.direction === 'horizontal' ? 'horizontally' : 'vertically'} because that gradient is smaller`,
+      formula,
       gradient: step,
     });
     channels.push({

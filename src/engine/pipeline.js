@@ -92,6 +92,10 @@ export const DEFAULT_SETTINGS = {
   seed: 1,
   olpfSigma: 0.6,
   method: 'hamiltonAdams',
+  // How Hamilton-Adams chooses the green pair. 'gradient' is the published rule;
+  // the other three switch the test off, which is the only way to *show* what the
+  // test buys instead of asserting it.
+  greenRule: 'gradient',
   whiteBalance: true,
 };
 
@@ -204,7 +208,9 @@ export function runPipeline(overrides = {}, options = {}) {
 
   // The guess. Everything above happened inside the camera; this is software.
   t = now();
-  const demosaic = demosaicWith(settings.method, mosaic, mask, width, height);
+  const demosaic = demosaicWith(settings.method, mosaic, mask, width, height, {
+    greenRule: settings.greenRule,
+  });
   // Back to 0..1 for developing. DN is linear in light, so a single division is a
   // pure rescale and changes no ratio in the reconstruction.
   const linearRecon = new Float32Array(width * height * 3);
@@ -276,7 +282,11 @@ export function compareMethods(overrides = {}) {
   const linear = new Float32Array(width * height * 3);
 
   return METHOD_IDS.map((id) => {
-    const demosaic = demosaicWith(id, capture.mosaic, capture.mask, width, height);
+    // The green rule has to travel with the comparison, or the table would score a
+    // reconstruction the viewer is not looking at.
+    const demosaic = demosaicWith(id, capture.mosaic, capture.mask, width, height, {
+      greenRule: settings.greenRule,
+    });
     for (let i = 0; i < linear.length; i++) {
       linear[i] = demosaic.rgb[i] / SENSOR.adcMax;
     }

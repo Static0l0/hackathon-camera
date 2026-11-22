@@ -199,14 +199,31 @@ export function createGuessDemo({ root, onNext }) {
     const tookRow = guess.direction === 'horizontal';
     const base = tookRow ? guess.row.average : guess.column.average;
 
+    // With the gradient test switched off there is no choice to explain, so the
+    // sentence must not pretend there was one.
+    const explanation = guess.forced
+      ? guess.greenRule === 'average'
+        ? `The gradient test is off, so Hamilton–Adams averages all four green neighbours: ` +
+          `${measuredDn(base)} across the row, ${measuredDn(tookRow ? guess.column.average : guess.row.average)} down, ` +
+          `and neither axis is preferred.`
+        : `The gradient test is off, so Hamilton–Adams takes the ${
+            guess.greenRule === 'horizontal' ? 'row' : 'column'
+          } at every pixel — ${measuredDn(guess.row.gradient)} across the row and ` +
+          `${measuredDn(guess.column.gradient)} down are both ignored — then bends that mean by the ` +
+          `local curvature of red: ${guessedDn(base)} → ${guessedDn(guess.hamiltonAdams)}.`
+      : `Hamilton–Adams measures both directions — ${measuredDn(guess.row.gradient)} across the row, ` +
+        `${measuredDn(guess.column.gradient)} down — so it takes the ` +
+        `${tookRow ? 'row' : 'column'}, then bends that mean by the local curvature of red: ` +
+        `${guessedDn(base)} → ${guessedDn(guess.hamiltonAdams)}. `;
+
     verdict.textContent =
       `You took the ${direction === 'horizontal' ? 'row' : 'column'}. ` +
-      `Hamilton–Adams measures both directions — ${measuredDn(guess.row.gradient)} across the row, ` +
-      `${measuredDn(guess.column.gradient)} down — so it takes the ` +
-      `${tookRow ? 'row' : 'column'}, then bends that mean by the local curvature of red: ` +
-      `${guessedDn(base)} → ${guessedDn(guess.hamiltonAdams)}. ` +
+      explanation +
+      (guess.forced ? ' ' : '') +
       verdictLine(guess, yours) +
-      (tookRow === (direction === 'horizontal') ? '' : ' Your pair and its pair are not the same pair.');
+      (!guess.forced && tookRow !== (direction === 'horizontal')
+        ? ' Your pair and its pair are not the same pair.'
+        : '');
   }
 
   /**

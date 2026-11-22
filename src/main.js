@@ -207,6 +207,14 @@ const controls = [
 /** Keep all three mounts showing the same settings. */
 function syncControls() {
   for (const group of controls) group.sync(settings);
+  // The green rule only exists inside Hamilton-Adams. Greying it out beats leaving
+  // a menu that silently changes nothing.
+  const rule = document.getElementById('control-greenRule');
+  if (rule) {
+    const uses = settings.method === 'hamiltonAdams';
+    rule.disabled = !uses;
+    rule.closest('.control')?.classList.toggle('is-inactive', !uses);
+  }
 }
 
 const viewer = createSplitView({
@@ -360,7 +368,11 @@ const client = createEngineClient({
   },
 
   onCompare(rows) {
-    methodTable.update(rows, settings.method);
+    // With the gradient test switched off the score can go UP while the picture
+    // gets worse, because a fixed axis happens to suit some patterns. Saying so is
+    // cheaper than being caught out by a visitor who noticed.
+    const caveat = settings.greenRule === 'gradient' ? null : 'This score was made with the gradient test switched off: one axis is used everywhere, and a pattern with no single correct axis can reward that. The map shows what it costs.';
+    methodTable.update(rows, settings.method, caveat);
   },
 
   onGuess(guess) {

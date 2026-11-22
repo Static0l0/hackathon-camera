@@ -31,11 +31,15 @@ export const PATCH_SIZE = 24;
  * dot each would be a solid white slab: at that density a few hundred thousand
  * two-pixel dots overlap, red dots mix with green and blue dots, and the result is
  * a neutral sheet that hides the layers underneath — the one thing this view has
- * to show. So above this budget every k-th electron gets a dot, `k` is the same
- * for every pixel (so the *pattern* of density is untouched), and the readout says
- * what `k` is.
+ * to show. It would also read as dust rather than as light, because no one can
+ * pick out a point in a fog.
+ *
+ * So above this budget every k-th electron gets a dot, `k` is the same for every
+ * pixel (so the *pattern* of density is untouched), and the readout says what `k`
+ * is. The budget is set low enough that dots stay separately visible — tens per
+ * cell rather than hundreds — and the sampling is stated, not hidden.
  */
-const POINT_BUDGET = 45_000;
+const POINT_BUDGET = 18_000;
 
 /**
  * Only these divisors are allowed, so the readout always says something a person
@@ -201,7 +205,10 @@ export function createSensorStack({ canvas, readout }) {
   photonGeometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(0), 3));
 
   const photonMaterial = new THREE.PointsMaterial({
-    size: 1.6,
+    // Small enough that neighbouring dots stay separate where the count is low: a
+    // dot you can tell apart from the next one is the whole point of counting
+    // them. Bigger dots read better at a glance and worse as evidence.
+    size: 1.35,
     sizeAttenuation: false,
     vertexColors: true,
     transparent: true,
@@ -210,7 +217,7 @@ export function createSensorStack({ canvas, readout }) {
     // layers this view exists to show. Normal blending lets the filter grid read
     // through the cloud, and dense areas become a solid colour rather than a
     // blown-out slab.
-    opacity: 0.55,
+    opacity: 0.42,
     depthWrite: false,
   });
 
@@ -256,7 +263,10 @@ export function createSensorStack({ canvas, readout }) {
 
       for (let d = 0; d < count && cursor < dots; d += 1) {
         positions[cursor * 3] = x + (rand() - 0.5) * 0.82;
-        positions[cursor * 3 + 1] = (rand() - 0.5) * 0.6;
+        // Thin sheet. A deep cloud stacks its own rows behind each other in
+        // projection and turns into fog; two tenths of a cell is enough to look
+        // three-dimensional and little enough to keep the dots apart.
+        positions[cursor * 3 + 1] = (rand() - 0.5) * 0.34;
         positions[cursor * 3 + 2] = z + (rand() - 0.5) * 0.82;
         colours[cursor * 3] = ((colour >> 16) & 0xff) / 255;
         colours[cursor * 3 + 1] = ((colour >> 8) & 0xff) / 255;
@@ -325,7 +335,7 @@ export function createSensorStack({ canvas, readout }) {
     // layers. Fade them in as the layers part, so the section opens on the
     // hardware and the electrons arrive when there is somewhere for them to be.
     // The counts in the readout are unaffected.
-    photonMaterial.opacity = 0.55 * Math.min(1, Math.max(0, (spread - 0.04) / 0.3));
+    photonMaterial.opacity = 0.42 * Math.min(1, Math.max(0, (spread - 0.04) / 0.3));
 
     frameCamera();
     render();

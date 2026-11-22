@@ -54,18 +54,20 @@ export function methodInfo(id) {
  * Run one method over a whole image.
  * @param {string} id @param {Float32Array} mosaic @param {Uint8Array} mask
  * @param {number} width @param {number} height
+ * @param {{greenRule?: string}} [options] only Hamilton-Adams reads this today; the
+ *   others ignore it, which is why it is an option and not a required argument
  * @returns {{rgb: Float32Array, detail: object|null}} linear RGB plus whatever the
  *   explanation needs (Hamilton-Adams returns its green plane) */
-export function demosaicWith(id, mosaic, mask, width, height) {
+export function demosaicWith(id, mosaic, mask, width, height, options = {}) {
   switch (id) {
     case 'nearest':
       return { rgb: demosaicNearest(mosaic, mask, width, height), detail: null };
     case 'bilinear':
       return { rgb: demosaicBilinear(mosaic, mask, width, height), detail: null };
     case 'hamiltonAdams': {
-      const { rgb, green } = demosaicHamiltonAdams(mosaic, mask, width, height);
+      const { rgb, green } = demosaicHamiltonAdams(mosaic, mask, width, height, options.greenRule);
       // The green plane is the intermediate the panel needs to show dH/dV honestly.
-      return { rgb, detail: { green } };
+      return { rgb, detail: { green, greenRule: options.greenRule ?? 'gradient' } };
     }
     case 'malvarHeCutler':
       return { rgb: demosaicMalvarHeCutler(mosaic, mask, width, height), detail: null };
@@ -79,8 +81,9 @@ export function demosaicWith(id, mosaic, mask, width, height) {
  * @param {string} id @param {Float32Array} mosaic @param {Uint8Array} mask
  * @param {number} width @param {number} height @param {number} x @param {number} y
  * @param {object|null} detail the `detail` returned by demosaicWith for this image
+ * @param {{greenRule?: string}} [options] must match what produced `detail`
  * @returns {{method: string, channels: Array<object>}} */
-export function explainWith(id, mosaic, mask, width, height, x, y, detail) {
+export function explainWith(id, mosaic, mask, width, height, x, y, detail, options = {}) {
   switch (id) {
     case 'nearest':
       return explainNearestPixel(mosaic, mask, width, height, x, y);
@@ -90,7 +93,16 @@ export function explainWith(id, mosaic, mask, width, height, x, y, detail) {
       if (!detail || !detail.green) {
         throw new Error('explainWith: hamiltonAdams needs the green plane from demosaicWith');
       }
-      return explainHamiltonAdamsPixel(mosaic, mask, width, height, x, y, detail.green);
+      return explainHamiltonAdamsPixel(
+        mosaic,
+        mask,
+        width,
+        height,
+        x,
+        y,
+        detail.green,
+        options.greenRule ?? detail.greenRule,
+      );
     case 'malvarHeCutler':
       return explainMalvarHeCutlerPixel(mosaic, mask, width, height, x, y);
     default:
