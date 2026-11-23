@@ -65,6 +65,16 @@ Five sections, in the order the story needs:
    average all four — and the error map changes shape while you watch.
 5. **The lab** — every remaining control, every readout, and the arithmetic behind
    the pixel you clicked.
+6. **The print** — expose a frame, then choose how to print it. Eight darkroom
+   treatments (hard paper, sepia, cyanotype, negative, solarise, lith, split tone)
+   map the *same* measured bytes to a different final image. Exposing freezes a
+   copy of the frame, so slider drags afterwards cannot rewrite your print. This
+   closes the argument: the camera recorded numbers; the print is a choice.
+
+**Controls:** drag the divider or click a pixel in fig. 01; every slider is
+keyboard-operable. Turn sound on with the toggle in the footer. Press **help**
+(bottom left) for a short guide. Settings are written to the URL hash, so a link
+to a configuration reloads the exact same frame.
 
 ### The pipeline, in the order light travels
 
@@ -204,7 +214,8 @@ At the shipped defaults (384×216, ISO 100, light 40 %, σ 0.6) the page reports
 src/engine/     pure maths: prng, scene, exposure, cfa, demosaic/, develop, metrics, explain, pipeline
 src/worker/     engine.worker.js — runs the engine, transfers buffers back
 src/view/       splitView, threePainter, canvasPainter, sensorStack, loupe, controls,
-                readouts, explainPanel, bayerDiagram, guessPanel, motion, scroll, client
+                readouts, explainPanel, bayerDiagram, guessPanel, printStudio, motion, scroll, client
+src/audio.js    procedural Web Audio — shutter, tap, develop, error; off by default
 tests/          61 Vitest tests, engine only
 scripts/        report.mjs (measurements), shot.mjs (headless CDP screenshots + probes),
                 contrast.mjs (WCAG ratios), probes/ (page-side checks)

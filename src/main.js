@@ -23,6 +23,7 @@ import { createGuessDemo } from './view/guessDemo.js';
 import { createErrorHeatmap, createMethodTable } from './view/guessPanel.js';
 import { createLoupe } from './view/loupe.js';
 import { createMotion } from './view/motion.js';
+import { createPrintStudio } from './view/printStudio.js';
 import { createReadouts } from './view/readouts.js';
 import { createSplitView } from './view/splitView.js';
 
@@ -74,6 +75,14 @@ const elements = {
   guessDemo: byId('guess-demo'),
   explainBody: byId('explain-body'),
   computeNote: byId('compute-note'),
+  printCanvas: byId('print-canvas'),
+  printGrid: byId('treatment-grid'),
+  printNote: byId('treatment-note'),
+  printStatus: byId('print-status'),
+  printExpose: byId('print-expose'),
+  printRetake: byId('print-retake'),
+  printFrame: byId('print-frame'),
+  printTag: byId('print-tag'),
 };
 
 /**
@@ -267,6 +276,20 @@ const methodTable = createMethodTable({
 const guessDemo = createGuessDemo({
   root: elements.guessDemo,
   onNext: () => nextGuessSite(),
+});
+
+/** The print studio: expose a frame and choose how to print it. */
+const printStudio = createPrintStudio({
+  canvas: elements.printCanvas,
+  grid: elements.printGrid,
+  note: elements.printNote,
+  status: elements.printStatus,
+  exposeButton: elements.printExpose,
+  retakeButton: elements.printRetake,
+  frameElement: elements.printFrame,
+  tag: elements.printTag,
+  onExpose: () => sound.play('shutter'),
+  onTreatment: () => sound.play('tap'),
 });
 
 /** Coalesce changes so a slider drag does not queue four comparisons. */
@@ -463,6 +486,7 @@ const client = createEngineClient({
     photonsReadout.update(frame);
     bayer.update(frame.coverage);
     heatmap.update(frame);
+    printStudio.setFrame(frame);
 
     // The first frame is the shutter: the sensor is exposed and the picture appears.
     if (firstFrame) {
