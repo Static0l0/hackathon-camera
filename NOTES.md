@@ -854,3 +854,57 @@ pm test 80 passed (10 new in 	ests/greenRule.test.js: the four rules against
 - The forced-rule error map is the argument, but it is small on a phone.
 - The cloud still merges to solid where the sunlight is; that is what 50 electrons
   per dot looks like at the top of the range.
+
+---
+
+## Phase 10: sound, a print bench, shareable frames, and a responsive pass
+
+Asked for: sound effects and more interactivity that respect the darkroom theme,
+then accessibility, shareable state, and a camera-with-filters feature.
+
+### Sound (src/audio.js)
+
+Procedural Web Audio, no files and no network: shutter (first frame and expose),
+tap (control changes, throttled to 150 ms so a slider drag is not a buzz), develop
+(settled metrics), error (worker failure). Off by default, stored in localStorage,
+toggled by a hairline button in the colophon. The AudioContext is created on first
+pointer/key interaction and resumed then, because browsers block autoplay.
+
+### Accessibility
+
+- The viewer is a labelled `role="group"`; the divider keeps its existing arrow-key
+  operation and the image its arrow/Enter/Escape pixel picker.
+- A polite live region announces settled PSNR and colour error, and worker errors.
+- A help dialog (`role="dialog"`, `aria-modal`) with focus management, Escape and
+  backdrop dismiss, reachable from a fixed button.
+- Mobile touch targets: guess cells and choice buttons at least 3 rem tall.
+
+### Shareable state (main.js)
+
+`readSettingsFromHash` / `writeSettingsToHash` encode only non-default settings into
+`#?key=value` pairs, debounced 300 ms. A shared link restores the exact frame. The
+loading overlay hides on first frame, with an 8 s fallback so a dead worker cannot
+trap the reader.
+
+### Section 06 — the print (src/view/printStudio.js)
+
+Eight darkroom print treatments (straight, hard paper, sepia, cyanotype, negative,
+solarise, lith, split tone) as pure RGB transforms over the frame's display bytes.
+Nothing touches the engine or the worker. "Expose" copies the current display
+buffer into a frozen print, so later slider drags cannot rewrite it; "retake"
+returns to a live preview. Treatment buttons are a segmented control with arrow-key
+navigation and aria-pressed state. The whole section is a grid that collapses to one
+column below 62 rem.
+
+### Responsive pass
+
+Audited at 360/390/768/1024/1440 px via same-origin iframes. No horizontal
+overflow at any width. One bug found and fixed: on mobile, `min-height: 3.5rem`
+plus `aspect-ratio: 1` forced guess cells wider than their grid track; the cells
+now keep the tall touch target with `aspect-ratio: auto` and a 13 px font.
+
+### Verified
+
+- `npm test` 80 passed.
+- Browser: zero console errors; expose, retake, treatment switching, hash read/write,
+  help dialog and loading state all exercised; no overflow at any audited width.

@@ -1418,3 +1418,534 @@ input[type='checkbox'] {
 .control.is-inactive select {
   cursor: not-allowed;
 }
+
+/* ---------------------------------------------------------------------------
+   Phase X: sound & atmosphere — darkroom tactility, kept optional.
+   --------------------------------------------------------------------------- */
+
+/* Subtle film grain, like a contact sheet in the darkroom. Off when the user
+   asks for reduced motion, because a shimmering texture is noise they did not ask for. */
+@media (prefers-reduced-motion: no-preference) {
+  #app {
+    position: relative;
+    isolation: isolate;
+  }
+  #app::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+/* The sound switch: a hairline button in the colophon, amber when on. */
+.sound-toggle {
+  grid-column: 12;
+  justify-self: end;
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.65rem;
+  margin: 0;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.sound-toggle:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.sound-toggle[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(245, 179, 1, 0.06);
+}
+
+.sound-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A tap on the viewer leaves a brief amber ring, like the safelight marking
+   where the enlarger head is pointed. Drawn by JS, removed after the animation. */
+.tap-ring {
+  position: absolute;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 4;
+  animation: tap-ring 0.55s ease-out forwards;
+}
+
+@keyframes tap-ring {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(140);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap-ring {
+    animation: none;
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Loading state — shown until the first frame arrives, then removed.
+   --------------------------------------------------------------------------- */
+
+#loading {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: var(--ground);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+#loading[hidden] {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Help panel — a short "how to use" that stays out of the way.
+   --------------------------------------------------------------------------- */
+
+.help-toggle {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+  background: var(--ground-raised);
+  border: 1px solid var(--rule);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+}
+
+.help-toggle:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.help-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.help-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  background: rgba(12, 12, 11, 0.92);
+}
+
+.help-panel[hidden] {
+  display: none;
+}
+
+.help-inner {
+  position: relative;
+  max-width: 42rem;
+  padding: clamp(2rem, 6vw, 3rem) clamp(1.5rem, 4vw, 2.5rem);
+  border: 1px solid var(--rule);
+  background: var(--ground);
+}
+
+.help-close {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 1rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.help-close:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.help-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.help-title {
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.1;
+  margin: 0 0 1rem;
+  color: var(--text);
+}
+
+.help-list {
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  line-height: 1.8;
+}
+
+.help-list li {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+  text-indent: -1.25rem;
+}
+
+.help-list li::before {
+  content: '▹';
+  color: var(--accent);
+  padding-right: 0.5rem;
+}
+
+.help-hint {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--text-dim);
+  font-family: var(--mono);
+}
+
+.help-hint code {
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------------------
+   Mobile touch targets — guess cells and buttons need to be finger-friendly.
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 40rem) {
+  .guess-cell {
+    min-height: 3.5rem;
+    /* Keep the tall touch target but let width come from the grid column:
+       aspect-ratio on a grid item otherwise forces the cell wider than its track. */
+    aspect-ratio: auto;
+    font-size: 0.8125rem;
+  }
+
+  .guess-choice,
+  .guess-next {
+    min-height: 3rem;
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .guess-window {
+    gap: 3px;
+  }
+}
+
+/* Screen-reader live region for metric announcements. Visually hidden, present. */
+#metrics-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Section 06 — the print.
+   A darkroom printing bench: the frame on the left, the exposure and paper
+   choices on the right. Hairlines, one amber accent, no decoration.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.print-studio {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: start;
+  margin-top: clamp(1.5rem, 3vw, 2.5rem);
+  padding-top: clamp(1.5rem, 3vw, 2rem);
+  border-top: 1px solid var(--rule);
+}
+
+.print-figure { margin: 0; }
+
+.print-frame {
+  position: relative;
+  border: 1px solid var(--rule);
+  background: #000;
+  overflow: hidden;
+}
+
+.print-frame[data-printed='true'] {
+  border-color: var(--accent);
+}
+
+#print-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.print-tag {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  font-family: var(--mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  background: rgba(12, 12, 11, 0.75);
+  padding: 0.2rem 0.4rem;
+}
+
+.print-frame[data-printed='true'] .print-tag {
+  color: var(--accent);
+}
+
+.print-caption {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  line-height: 1.6;
+  color: var(--text-dim);
+  margin-top: 0.75rem;
+}
+
+.print-controls {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.print-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.shutter,
+.print-retake {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--rule);
+  padding: 0.7rem 1.1rem;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+
+.shutter {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.shutter:hover,
+.print-retake:hover {
+  background: rgba(245, 179, 1, 0.06);
+  border-color: var(--accent);
+}
+
+.shutter:focus-visible,
+.print-retake:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.print-retake[hidden] { display: none; }
+
+.print-treatment-title { margin-top: 0.5rem; }
+
+.treatment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.treatment {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-align: left;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--rule);
+  padding: 0.55rem 0.6rem;
+  cursor: pointer;
+  line-height: 1.2;
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+
+.treatment:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.treatment[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(245, 179, 1, 0.06);
+}
+
+.treatment:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.treatment-note {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  line-height: 1.65;
+  color: var(--text-dim);
+  margin: 0.25rem 0 0;
+  max-width: 46ch;
+  min-height: 5.5rem;
+}
+
+/* A brief safelight flash when the frame is exposed. */
+.print-frame.is-exposing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  pointer-events: none;
+  animation: expose-flash 0.32s ease-out forwards;
+}
+
+@keyframes expose-flash {
+  0% { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .print-frame.is-exposing::after { animation: none; display: none; }
+  .shutter, .print-retake, .treatment { transition: none; }
+}
+
+@media (max-width: 62rem) {
+  .print-studio { grid-template-columns: minmax(0, 1fr); }
+  .treatment-note { min-height: 0; }
+}
+
+@media (max-width: 40rem) {
+  .shutter, .print-retake { min-height: 3rem; padding: 0.75rem 1rem; }
+  .treatment { min-height: 3rem; padding: 0.75rem; }
+  .treatment-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------------------------------------------------------------------------
+   Phase X: sound & atmosphere — darkroom tactility, kept optional.
+   --------------------------------------------------------------------------- */
+
+/* Subtle film grain, like a contact sheet in the darkroom. Off when the user
+   asks for reduced motion, because a shimmering texture is noise they did not ask for. */
+@media (prefers-reduced-motion: no-preference) {
+  #app {
+    position: relative;
+    isolation: isolate;
+  }
+  #app::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+/* The sound switch: a hairline button in the colophon, amber when on. */
+.sound-toggle {
+  grid-column: 12;
+  justify-self: end;
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.65rem;
+  margin: 0;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.sound-toggle:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.sound-toggle[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(245, 179, 1, 0.06);
+}
+
+.sound-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A tap on the viewer leaves a brief amber ring, like the safelight marking
+   where the enlarger head is pointed. Drawn by JS, removed after the animation. */
+.tap-ring {
+  position: absolute;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 4;
+  animation: tap-ring 0.55s ease-out forwards;
+}
+
+@keyframes tap-ring {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(140);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap-ring {
+    animation: none;
+    display: none;
+  }
+}
