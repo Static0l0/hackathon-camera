@@ -238,11 +238,11 @@ function paintDock(frame) {
 const sound = createSound();
 const soundToggle = document.getElementById('sound-toggle');
 if (soundToggle) {
-  soundToggle.textContent = sound.isEnabled() ? 'sound on' : 'sound off';
+  soundToggle.textContent = sound.isEnabled() ? 'Sound on' : 'Sound off';
   soundToggle.setAttribute('aria-pressed', sound.isEnabled());
   soundToggle.addEventListener('click', () => {
     sound.toggle();
-    soundToggle.textContent = sound.isEnabled() ? 'sound on' : 'sound off';
+    soundToggle.textContent = sound.isEnabled() ? 'Sound on' : 'Sound off';
     soundToggle.setAttribute('aria-pressed', sound.isEnabled());
     if (sound.isEnabled()) sound.play('tap');
   });

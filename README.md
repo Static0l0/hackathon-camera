@@ -71,9 +71,11 @@ Five sections, in the order the story needs:
    copy of the frame, so slider drags afterwards cannot rewrite your print. This
    closes the argument: the camera recorded numbers; the print is a choice.
 
-**Controls:** drag the divider or click a pixel in fig. 01; every slider is
-keyboard-operable. Turn sound on with the toggle in the footer. Press **help**
-(bottom left) for a short guide. Settings are written to the URL hash, so a link
+**Controls:** all controls live in the left dock and stay there as you scroll; the
+frame above them updates as you move each one. Drag the divider or click a pixel in
+fig. 01; every slider is keyboard-operable. Sound is on by default — quiet, filtered
+mechanical clicks (no beeps) — and can be muted in the footer. Press **How to use**
+in the top bar for a short guide. Settings are written to the URL hash, so a link
 to a configuration reloads the exact same frame.
 
 ### The pipeline, in the order light travels
