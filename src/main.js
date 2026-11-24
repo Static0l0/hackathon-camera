@@ -83,6 +83,11 @@ const elements = {
   printRetake: byId('print-retake'),
   printFrame: byId('print-frame'),
   printTag: byId('print-tag'),
+  dock: byId('dock'),
+  dockCanvas: byId('dock-canvas'),
+  dockToggle: byId('dock-toggle'),
+  topPsnr: byId('top-psnr'),
+  topSnr: byId('top-snr'),
 };
 
 /**
@@ -201,6 +206,31 @@ const motion = createMotion();
 motion.reveal([...document.querySelectorAll('[data-reveal]')]);
 
 /** Sound: off by default, turned on by the visitor. */
+// The dock is the only place controls live, so on narrow screens it slides in
+// from the right instead of forcing a second scroll past an explanation.
+if (elements.dockToggle && elements.dock) {
+  elements.dockToggle.addEventListener('click', () => {
+    const open = elements.dock.classList.toggle('is-open');
+    elements.dockToggle.setAttribute('aria-expanded', String(open));
+  });
+}
+
+// A tiny 2D copy of the frame beside the controls: a person changes a slider and
+// sees the effect without taking their eyes off it. This is a blit of bytes the
+// worker already sent, so it costs no engine work.
+const dockContext = elements.dockCanvas?.getContext('2d');
+function paintDock(frame) {
+  if (!dockContext || !frame?.display) return;
+  const { width, height, display } = frame;
+  const image = new ImageData(display, width, height);
+  const scratch = document.createElement('canvas');
+  scratch.width = width;
+  scratch.height = height;
+  scratch.getContext('2d').putImageData(image, 0, 0);
+  dockContext.imageSmoothingEnabled = true;
+  dockContext.drawImage(scratch, 0, 0);
+}
+
 const sound = createSound();
 const soundToggle = document.getElementById('sound-toggle');
 if (soundToggle) {
@@ -321,6 +351,10 @@ function scheduleSettle() {
 function onChange(patch) {
   Object.assign(settings, patch);
   syncControls();
+  // A dragged frame has no score; say so in the top strip rather than leaving a
+  // stale number standing as if it belonged to the new picture.
+  elements.topPsnr.textContent = '—';
+  elements.topSnr.classList.add('is-pending');
   client.requestFrame(settings, { metrics: false });
   scheduleSettle();
   scheduleCompare();
@@ -482,6 +516,7 @@ const client = createEngineClient({
   onFrame(frame) {
     currentFrame = frame;
     viewer.setFrame(frame);
+    paintDock(frame);
     readouts.update(frame);
     photonsReadout.update(frame);
     bayer.update(frame.coverage);
@@ -499,6 +534,10 @@ const client = createEngineClient({
     // computed without metrics, so a settle on every frame would flicker; this
     // fires once per burst, on the frame that carries the real scores.
     if (frame.metrics.psnr !== null) {
+      elements.topPsnr.textContent = `${frame.metrics.psnr.toFixed(1)} dB`;
+      elements.topSnr.textContent = `${frame.metrics.midGreySnrDb.toFixed(1)} dB`;
+      elements.topPsnr.classList.remove('is-pending');
+      elements.topSnr.classList.remove('is-pending');
       motion.settle(elements.readoutsGrid);
       motion.settle(elements.photonsReadout);
       // A soft develop hum when the reconstruction is finished — like a print
