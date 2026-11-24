@@ -40,19 +40,19 @@ export const TREATMENTS = [
   {
     id: 'straight',
     label: 'straight print',
-    note: 'The developed frame as the pipeline produced it: white-balanced, gamma-corrected, nothing added. Every other treatment changes the print, not the exposure.',
+    note: 'The frame as the engine made it. No extra change. Every other treatment changes the print, not the photo.',
     apply: (r, g, b) => [r, g, b],
   },
   {
     id: 'hardPaper',
     label: 'hard paper',
-    note: 'A high-contrast paper pushes the midtones apart: darks get darker and lights get lighter, so faint differences in the original separate into visible tones.',
+    note: 'Hard paper makes darks darker and lights lighter. Small differences become easy to see.',
     apply: (r, g, b) => [hardPaper(r), hardPaper(g), hardPaper(b)],
   },
   {
     id: 'sepia',
     label: 'sepia toned',
-    note: 'Sepia toning replaces the silver in a print with a sulphide. The brightness of each pixel survives; its colour becomes one warm ink.',
+    note: 'Sepia toning changes the silver in a print to a sulphide. Brightness stays the same. The colour becomes one warm brown.',
     apply(r, g, b) {
       const y = luma(r, g, b);
       return [byte(y * 1.07), byte(y * 0.79), byte(y * 0.54)];
@@ -61,19 +61,19 @@ export const TREATMENTS = [
   {
     id: 'cyanotype',
     label: 'cyanotype',
-    note: 'A cyanotype is an iron-based contact print. Only one chemical reaction makes the image, so everything becomes a shade of Prussian blue.',
+    note: 'A cyanotype is an iron print. One chemical reaction makes the image, so everything becomes Prussian blue.',
     apply: cyanotype,
   },
   {
     id: 'negative',
     label: 'negative',
-    note: 'Before the print, the recording is a negative: light becomes dark. The printer reverses it again on paper to get the scene back.',
+    note: 'The sensor records a negative. Light becomes dark. The print reverses it to show the scene.',
     apply: (r, g, b) => [byte(255 - r), byte(255 - g), byte(255 - b)],
   },
   {
     id: 'solarise',
     label: 'solarise',
-    note: 'The Sabattier effect: re-expose a print part-way through developing and the brightest tones flip back toward dark, leaving a thin bright contour at the edge.',
+    note: 'Re-expose a print during development. The brightest tones turn dark. A thin bright line appears at each edge.',
     apply(r, g, b) {
       const flip = (v) => (v > 150 ? byte(255 - (v - 150) * 2.2) : v);
       return [flip(r), flip(g), flip(b)];
@@ -82,7 +82,7 @@ export const TREATMENTS = [
   {
     id: 'lith',
     label: 'lith print',
-    note: 'Lith developer drives the emulsion toward black or white with almost nothing between. The continuous photograph becomes a graphic, posterised one.',
+    note: 'Lith developer makes the image black or white with few tones between. The photo becomes a graphic.',
     apply(r, g, b) {
       const step = (v) => (v < 80 ? 12 : v < 170 ? 128 : 246);
       return [step(r), step(g), step(b)];
@@ -91,7 +91,7 @@ export const TREATMENTS = [
   {
     id: 'splitTone',
     label: 'split tone',
-    note: 'Two toners, one for the shadows and one for the highlights: the darks go cool and the lights go warm, while the midtones carry both.',
+    note: 'Two toners colour the print. Darks turn cool. Lights turn warm. Midtones carry both.',
     apply(r, g, b) {
       const t = luma(r, g, b) / 255;
       return [byte(28 + t * 222), byte(38 + t * 176), byte(96 + t * 58)];
@@ -191,14 +191,14 @@ export function createPrintStudio({
   function setStatus() {
     const source = printedFrame ?? liveFrame;
     if (!source) {
-      status.textContent = 'Set an exposure above, then expose a frame.';
+      status.textContent = 'Expose a frame to begin.';
       return;
     }
     const s = source.settings ?? {};
     if (printedFrame) {
-      status.textContent = `Exposed · ${source.width}×${source.height} · ${s.iso ? `ISO ${s.iso} · ` : ''}${s.shutterSeconds ? `1/${Math.round(1 / s.shutterSeconds)} s` : ''} — printed, not live`;
+      status.textContent = `Frozen · ${source.width}×${source.height} · ISO ${s.iso} · 1/${Math.round(1 / s.shutterSeconds)} s`;
     } else {
-      status.textContent = 'Live preview — the frame changes with the controls above.';
+      status.textContent = 'Live. The frame follows the controls in the left panel.';
     }
   }
 

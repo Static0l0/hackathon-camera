@@ -555,8 +555,7 @@ const client = createEngineClient({
     }
 
     elements.computeNote.textContent =
-      `computed in your browser, ${Math.round(frame.ms)} ms — ${frame.width}×${frame.height} pixels, ` +
-      'nothing leaves this page';
+      `Computed in this browser in ${Math.round(frame.ms)} ms. ${frame.width}×${frame.height} pixels. No data leaves the page.`;
 
     // The selected pixel keeps its explanation, recomputed against the frame
     // that is now on screen. Otherwise the panel would describe a stale image.
@@ -582,7 +581,7 @@ const client = createEngineClient({
     // With the gradient test switched off the score can go UP while the picture
     // gets worse, because a fixed axis happens to suit some patterns. Saying so is
     // cheaper than being caught out by a visitor who noticed.
-    const caveat = settings.greenRule === 'gradient' ? null : 'This score was made with the gradient test switched off: one axis is used everywhere, and a pattern with no single correct axis can reward that. The map shows what it costs.';
+    const caveat = settings.greenRule === 'gradient' ? null : 'The gradient test is off. One direction is used at every site. This can raise the score. The error map shows what it costs.';
     methodTable.update(rows, settings.method, caveat);
   },
 
@@ -598,18 +597,18 @@ const client = createEngineClient({
     // The full arithmetic lives in the lab, thousands of pixels below. A reader
     // who clicks once in the hook would otherwise see the loupe and nothing else,
     // so the answer is echoed where they clicked.
-    elements.viewerStatus.textContent = `${explanation.sentence} Full arithmetic in fig. 05.`;
+    elements.viewerStatus.textContent = `${explanation.sentence} See the lab for the full arithmetic.`;
   },
 
   onFailure(message) {
-    elements.viewerStatus.textContent = `engine error: ${message}`;
+    elements.viewerStatus.textContent = `The engine failed: ${message}`;
     sound.play('error');
     metricsLive.textContent = `Engine error: ${message}`;
   },
 });
 
 elements.viewerStatus.textContent =
-  'drag to wipe · click a pixel to see what the algorithm did there';
+  'Drag the divider. Select a pixel to see its numbers.';
 
 /** The site the guess panel is teaching from, or null before the first frame. */
 let guessPick = null;

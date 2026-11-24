@@ -57,11 +57,6 @@ export function neighbourhood(mosaic, mask, width, height, x, y, radius = EXPLAI
   return rows;
 }
 
-/** Capitalise the first letter without touching the rest. */
-function sentenceCase(text) {
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
 /**
  * The one-sentence summary shown under the loupe.
  *
@@ -74,11 +69,12 @@ function sentenceCase(text) {
 export function buildSentence(channel, channels) {
   const measured = channels.find((c) => c.measured);
   const guessed = channels.filter((c) => !c.measured);
-  if (!measured) return 'No measurement at this pixel.';
-  const head = `This pixel only measured ${CHANNEL_NAMES[channel]}: ${Math.round(measured.value)}.`;
-  if (guessed.length === 0) return `${head} Nothing was guessed.`;
+  if (!measured) return 'No measurement at this site.';
+  // One fact per sentence. Short words. The number is the evidence.
+  const head = `This site measured ${CHANNEL_NAMES[channel]} only: ${Math.round(measured.value)}.`;
+  if (guessed.length === 0) return `${head} The camera guessed nothing here.`;
   const list = guessed.map((g) => `${CHANNEL_NAMES[g.channel]} (${Math.round(g.value)})`).join(' and ');
-  return `${head} ${sentenceCase(list)} ${guessed.length > 1 ? 'were' : 'was'} guessed.`;
+  return `${head} The camera guessed ${list}.`;
 }
 
 /**

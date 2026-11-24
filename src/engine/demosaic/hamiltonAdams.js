@@ -11,7 +11,7 @@
  *
  * The gradient estimate is not just green's own difference. It adds a term that
  * measures how much the *known* colour changes over two pixels, which is what
- * makes the test robust when green itself is smooth but the edge is in the red
+ * makes the test work when green itself is smooth but the edge is in the red
  * channel:
  *
  *   dH = |G(x-1,y) - G(x+1,y)| + |2*C(x,y) - C(x-2,y) - C(x+2,y)|
@@ -245,13 +245,14 @@ export function explainHamiltonAdamsPixel(mosaic, mask, width, height, x, y, gre
     const step = greenAtColourSite(mosaic, width, height, x, y, rule);
     let formula;
     if (rule === 'average') {
-      formula = 'no axis chosen: the mean of the four green neighbours';
+      formula = 'Mean of four green neighbours. No direction is chosen.';
     } else if (rule === 'horizontal' || rule === 'vertical') {
-      formula = `forced ${rule}: the gradient test is switched off, so the same pair is used everywhere`;
+      formula = `The gradient test is off. The ${rule === 'horizontal' ? 'row' : 'column'} pair is used at every site.`;
     } else if (step.direction === 'equal') {
-      formula = 'dH equals dV: average both directions';
+      formula = 'The two gradients are equal. The mean of both directions is used.';
     } else {
-      formula = `interpolated ${step.direction === 'horizontal' ? 'horizontally' : 'vertically'} because that gradient is smaller`;
+      const axis = step.direction === 'horizontal' ? 'row' : 'column';
+      formula = `The ${axis} gradient is smaller. The ${axis} pair is used.`;
     }
     channels.push({
       channel: 1,
@@ -264,7 +265,7 @@ export function explainHamiltonAdamsPixel(mosaic, mask, width, height, x, y, gre
       channel: own,
       measured: true,
       value: mosaic[i],
-      formula: 'measured here',
+      formula: 'Measured at this site.',
     });
     // The opposite colour comes from diagonal colour differences.
     const d = [];
@@ -284,7 +285,7 @@ export function explainHamiltonAdamsPixel(mosaic, mask, width, height, x, y, gre
       channel: own === 0 ? 2 : 0,
       measured: false,
       value: green[i] + mean,
-      formula: 'green + mean of the four diagonal colour differences',
+      formula: 'Green plus the mean of four diagonal colour differences.',
       taps: d,
     });
   } else {
@@ -292,7 +293,7 @@ export function explainHamiltonAdamsPixel(mosaic, mask, width, height, x, y, gre
       channel: 1,
       measured: true,
       value: mosaic[i],
-      formula: 'measured here',
+      formula: 'Measured at this site.',
     });
     const redRow = (y & 1) === 0;
     const leftIndex = mirrorIndex(y, height) * width + mirrorIndex(x - 1, width);
@@ -307,7 +308,7 @@ export function explainHamiltonAdamsPixel(mosaic, mask, width, height, x, y, gre
       channel: horizontalChannel,
       measured: false,
       value: green[i] + horizontalDiff,
-      formula: 'green + mean horizontal colour difference',
+      formula: 'Green plus the mean colour difference along the row.',
       taps: [
         { x: mirrorIndex(x - 1, width), y, difference: mosaic[leftIndex] - green[leftIndex] },
         { x: mirrorIndex(x + 1, width), y, difference: mosaic[rightIndex] - green[rightIndex] },
@@ -317,7 +318,7 @@ export function explainHamiltonAdamsPixel(mosaic, mask, width, height, x, y, gre
       channel: verticalChannel,
       measured: false,
       value: green[i] + verticalDiff,
-      formula: 'green + mean vertical colour difference',
+      formula: 'Green plus the mean colour difference down the column.',
       taps: [
         { x, y: mirrorIndex(y - 1, height), difference: mosaic[upIndex] - green[upIndex] },
         { x, y: mirrorIndex(y + 1, height), difference: mosaic[downIndex] - green[downIndex] },

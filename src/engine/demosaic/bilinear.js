@@ -88,7 +88,7 @@ export function explainBilinearPixel(mosaic, mask, width, height, x, y) {
         measured: true,
         taps: [{ x, y, value: mosaic[i] }],
         value: mosaic[i],
-        formula: 'measured here',
+        formula: 'Measured at this site.',
       });
       continue;
     }
@@ -101,7 +101,7 @@ export function explainBilinearPixel(mosaic, mask, width, height, x, y) {
       measured: false,
       taps,
       value,
-      formula: `mean of ${taps.length} neighbours = ${sum.toFixed(1)} / ${taps.length}`,
+      formula: `Mean of ${taps.length} neighbours: ${sum.toFixed(1)} / ${taps.length}`,
     });
   }
   return { method: 'bilinear', channels };

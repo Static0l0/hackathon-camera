@@ -24,7 +24,7 @@
         </span>
         <strong>The Mosaic</strong>
       </div>
-      <p class="topbar-idea">A camera records one colour per pixel. The rest is invented.</p>
+      <p class="topbar-idea">Each pixel sees one colour. The camera guesses the other two.</p>
       <dl class="topbar-stats" id="top-stats" aria-live="polite">
         <div><dt>PSNR</dt><dd id="top-psnr">—</dd></div>
         <div><dt>SNR</dt><dd id="top-snr">—</dd></div>
@@ -66,14 +66,17 @@
         <header class="intro">
           <h1>Your camera never recorded a colour photo</h1>
           <p>
-            Every pixel saw one colour, in very few photons. Software invented the rest.
-            Drag the divider below to see the difference.
+            Each pixel measured one colour, using only a few photons. Software guessed
+            the other two colours. Drag the divider to see what the sensor kept.
           </p>
         </header>
 
         <section class="section" id="hook" aria-labelledby="hook-title">
           <h2 id="hook-title">What the sensor kept</h2>
-          <p class="lede">Left: the only numbers that existed. Right: the photograph you were shown.</p>
+          <p class="lede">
+            Left: the numbers from the sensor. Right: the photo you see. Drag the line
+            between them.
+          </p>
 
           <div class="viewer" id="viewer">
             <div class="viewer-canvas" id="viewer-canvas">
@@ -94,16 +97,16 @@
             </div>
           </div>
           <p class="status-line" id="viewer-status" role="status">
-            Drag to wipe · click a pixel to see what the algorithm did there
+            Drag the divider. Select a pixel to see its numbers.
           </p>
         </section>
 
         <section class="section" id="photons" aria-labelledby="photons-title">
-          <h2 id="photons-title">One pixel is four layers deep</h2>
+          <h2 id="photons-title">A pixel has four layers</h2>
           <p class="lede">
-            A microlens gathers light, one filter passes a single colour, a diode counts the
-            electrons, and a circuit reads the number out. The cloud is that count — sampled
-            when there are too many dots to draw, with the rate printed below.
+            Light passes through a lens and a colour filter. A sensor site counts the
+            electrons. A circuit reads the count. Each dot is part of that count. When
+            there are too many dots, the page draws fewer and prints the rate below.
           </p>
 
           <div class="stack-stage" id="stack-stage">
@@ -130,7 +133,10 @@
 
         <section class="section" id="pattern" aria-labelledby="pattern-title">
           <h2 id="pattern-title">One colour per pixel</h2>
-          <p class="lede">Two of every four sites are green, because green carries most of the detail.</p>
+          <p class="lede">
+            Each site has one filter. Two of every four filters are green. The eye
+            sees green detail best.
+          </p>
 
           <div class="pattern">
             <figure class="pattern-figure">
@@ -139,9 +145,9 @@
             </figure>
             <div class="pattern-copy">
               <p>
-                The RGGB pattern repeats every two pixels in both directions. A red site never
-                measures green or blue. Those two numbers have to be guessed — which is what the
-                next section does.
+                This RGGB pattern repeats every two sites. A red site never measures
+                green or blue. The camera must guess those two numbers. The next
+                section shows how.
               </p>
               <dl id="pattern-counts" aria-live="polite"></dl>
             </div>
@@ -151,15 +157,16 @@
         <section class="section" id="guess" aria-labelledby="guess-title">
           <h2 id="guess-title">Make the guess yourself</h2>
           <p class="lede">
-            At a red or blue pixel there is no green reading. Choose which neighbours to trust,
-            then see what each algorithm actually did.
+            A red or blue site has no green reading. Choose a pair of green neighbours.
+            Then see what each algorithm chose.
           </p>
 
           <div class="guess-demo" id="guess-demo"></div>
 
           <p class="lede lede-small">
-            Every method rebuilds green first, then fills red and blue from colour differences.
-            The differences stay smooth across an edge even when the colours jump.
+            Each method builds the green layer first. It then fills red and blue from
+            colour differences. Those differences stay smooth across an edge, even
+            when the colours change sharply.
           </p>
 
           <div class="guess">
@@ -167,10 +174,11 @@
               <canvas id="error-canvas" width="384" height="216" aria-hidden="true"></canvas>
               <figcaption class="guess-caption">
                 <span class="guess-swatch" aria-hidden="true"></span>
-                <span id="error-caption">Where the reconstruction is wrong, in 8-bit levels</span>
+                <span id="error-caption">Error map, in 8-bit levels</span>
               </figcaption>
               <p class="status-line">
-                Bright means wrong. Switch the scene to the zone plate to see where each method fails.
+                Bright areas are errors. Select the zone plate scene to see where
+                each method fails.
               </p>
             </figure>
 
@@ -184,21 +192,23 @@
               </table>
               <p class="status-line" id="method-note"></p>
               <p class="status-line" id="method-failures">
-                Nearest neighbour assumes a neighbour is close enough, so edges zip. Bilinear
-                assumes the image is smooth in every direction, so diagonals smear. Hamilton–Adams
-                assumes an edge has one axis, so it commits and can staircase. Malvar–He–Cutler
-                smooths what it cannot see, which lowers the average miss and blurs fine colour.
+                Nearest neighbour copies one pixel, so edges look like a zip. Bilinear
+                uses a smooth average, so diagonal edges smear. Hamilton-Adams picks
+                one direction, so an edge can look like steps. Malvar-He-Cutler
+                smooths the error it cannot see, so fine colour blurs.
               </p>
             </div>
           </div>
         </section>
 
         <section class="section" id="lab" aria-labelledby="lab-title">
-          <h2 id="lab-title">The arithmetic behind one pixel</h2>
-          <p class="lede">Click a pixel in the first image. These are the numbers the code used.</p>
+          <h2 id="lab-title">The arithmetic at one site</h2>
+          <p class="lede">
+            Select a pixel in the first image. This panel shows the numbers the engine used.
+          </p>
           <div class="explain" id="explain">
             <div id="explain-body">
-              <p class="status-line">Click the image above. The numbers here are the ones the code used.</p>
+              <p class="status-line">Select a pixel in the first image.</p>
             </div>
           </div>
         </section>
@@ -206,8 +216,8 @@
         <section class="section" id="print" aria-labelledby="print-title">
           <h2 id="print-title">The print is a choice</h2>
           <p class="lede">
-            Exposing freezes the current frame. Then print it eight ways — the same measured
-            bytes, a different final image.
+            Expose freezes the current frame. Then print it in eight ways. The measured
+            numbers stay the same. The print changes.
           </p>
 
           <div class="print-studio">
@@ -217,7 +227,7 @@
                         role="img" aria-label="The printed frame"></canvas>
                 <span class="print-tag" id="print-tag" aria-hidden="true">live</span>
               </div>
-              <figcaption id="print-status" role="status">Set an exposure, then expose a frame.</figcaption>
+              <figcaption id="print-status" role="status">Expose a frame to begin.</figcaption>
             </figure>
 
             <div class="print-controls">
@@ -251,10 +261,10 @@
         <button id="help-close" class="help-close" aria-label="Close help">✕</button>
         <h2>How to use this</h2>
         <ul>
-          <li>Change any control in the left panel. The preview above it updates immediately.</li>
-          <li>Drag the divider to compare raw sensor data with the developed photograph.</li>
-          <li>Click any pixel to see the arithmetic used to reconstruct it.</li>
-          <li>Scroll for the explanation; the controls stay with you.</li>
+          <li>Change a control in the left panel. The preview above it updates.</li>
+          <li>Drag the divider to compare sensor data with the photo.</li>
+          <li>Select a pixel to see the numbers used to guess its colour.</li>
+          <li>Scroll to read. The controls stay on screen.</li>
         </ul>
       </div>
     </div>

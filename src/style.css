@@ -300,7 +300,7 @@ main { min-width: 0; padding: 0 40px 80px; max-width: 1100px; }
 .guess-value { margin: 0; font: 14px var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
 .guess-error { color: var(--muted); font-size: 11px; margin-left: 6px; }
 .guess-row.is-truth, .guess-value.is-truth { color: var(--accent); }
-.guess-verdict { margin: 16px 0 0; font-size: 14px; line-height: 1.6; max-width: 56ch; }
+.guess-verdict { margin: 16px 0 0; font-size: 14px; line-height: 1.6; max-width: 56ch; white-space: pre-line; }
 .guess-next { margin-top: 16px; }
 
 .guess { display: grid; grid-template-columns: 1.3fr 1fr; gap: 36px; margin-top: 28px; }

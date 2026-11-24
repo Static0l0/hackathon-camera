@@ -207,7 +207,7 @@ export function explainMalvarHeCutlerPixel(mosaic, mask, width, height, x, y) {
         channel,
         measured: true,
         value: mosaic[i],
-        formula: 'measured here, no filter',
+        formula: 'Measured at this site. No filter is used.',
         kernel: null,
         kernelGrid: null,
         taps: [],
@@ -229,7 +229,7 @@ export function explainMalvarHeCutlerPixel(mosaic, mask, width, height, x, y) {
       channel,
       measured,
       value: measured ? mosaic[i] : sum / 8,
-      formula: measured ? 'measured here' : `${name} filter, weighted sum / 8`,
+      formula: measured ? 'Measured at this site.' : `${name} filter: weighted sum divided by 8`,
       kernel: name,
       // The constants above are flat 25-entry arrays because that is how the
       // convolution loop reads them; the panel draws a 5x5, so reshape here

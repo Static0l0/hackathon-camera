@@ -81,7 +81,7 @@ export function createExplainPanel({ root }) {
       const meta = document.createElement('p');
       meta.className = 'note';
       meta.textContent =
-        `row ${explanation.y} · col ${explanation.x} · ${methodLabel}`;
+        `Row ${explanation.y}, column ${explanation.x}. ${methodLabel}.`;
       root.append(meta);
 
       const grid = document.createElement('div');
@@ -109,7 +109,7 @@ export function createExplainPanel({ root }) {
 
         const state = document.createElement('span');
         state.className = 'note';
-        state.textContent = channel.measured ? 'measured here' : 'guessed';
+        state.textContent = channel.measured ? 'Measured' : 'Guessed';
         head.append(state);
 
         block.append(head);
@@ -132,7 +132,7 @@ export function createExplainPanel({ root }) {
           const gradients = document.createElement('div');
           gradients.className = 'channel-formula';
           gradients.textContent =
-            `dH ${formatValue(dH)} · dV ${formatValue(dV)} → ${direction}`;
+            `Row gradient ${formatValue(dH)}. Column gradient ${formatValue(dV)}. Chosen: ${direction}.`;
           block.append(gradients);
         }
 
@@ -149,7 +149,7 @@ export function createExplainPanel({ root }) {
     /**
      * @param {string} message
      */
-    clear(message = 'No pixel chosen yet.') {
+    clear(message = 'Select a pixel in the first image.') {
       root.replaceChildren();
       const placeholder = document.createElement('p');
       placeholder.className = 'placeholder';

@@ -16,7 +16,7 @@ import { DEMOSAIC_METHODS, GREEN_RULES, SCENE_INFO, SCENE_NAMES } from '../engin
 
 /** How each green rule is written on screen. Short: the menu is narrow. */
 const GREEN_RULE_LABELS = {
-  gradient: 'Pick the cheaper direction',
+  gradient: 'Compare both directions',
   horizontal: 'Always the row',
   vertical: 'Always the column',
   average: 'Average all four',

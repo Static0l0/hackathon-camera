@@ -27,8 +27,8 @@ function decibels(value) {
 const READOUTS = [
   {
     id: 'snr',
-    label: 'Mid-grey SNR',
-    detail: 'signal to noise at 18% grey, these settings',
+    label: 'Grey SNR',
+    detail: 'signal to noise for a mid-grey patch',
     value: (frame) => ({
       text: decibels(frame.metrics.midGreySnrDb),
       unit: 'dB',
@@ -37,7 +37,7 @@ const READOUTS = [
   {
     id: 'electrons',
     label: 'Mean signal',
-    detail: 'electrons collected per pixel',
+    detail: 'electrons per pixel',
     value: (frame) => ({
       text: Math.round(frame.metrics.meanElectrons).toString(),
       unit: 'e⁻',
@@ -46,7 +46,7 @@ const READOUTS = [
   {
     id: 'clipped',
     label: 'Clipped',
-    detail: 'pixels that hit the top of the range',
+    detail: 'pixels at the top of the range',
     value: (frame) => ({
       text: (frame.metrics.clippedFraction * 100).toFixed(1),
       unit: '%',
@@ -54,8 +54,8 @@ const READOUTS = [
   },
   {
     id: 'psnr',
-    label: 'Reconstruction',
-    detail: 'PSNR against the ideal sensor, no white balance',
+    label: 'PSNR',
+    detail: 'reconstruction quality against the ideal sensor',
     value: (frame) =>
       frame.metrics.psnr === null
         ? { text: null }
@@ -64,7 +64,7 @@ const READOUTS = [
   {
     id: 'chroma',
     label: 'Colour error',
-    detail: 'mean colour shift, 8-bit units',
+    detail: 'mean shift in the colour differences',
     value: (frame) =>
       frame.metrics.chromaError === null
         ? { text: null }
@@ -72,8 +72,8 @@ const READOUTS = [
   },
   {
     id: 'split',
-    label: 'Filter split',
-    detail: 'red · green · blue sites',
+    label: 'Filters',
+    detail: 'red, green, blue sites',
     value: (frame) => ({
       text: `${Math.round(frame.coverage.red * 100)} · ${Math.round(
         frame.coverage.green * 100,
@@ -83,8 +83,8 @@ const READOUTS = [
   },
   {
     id: 'frame',
-    label: 'Frame',
-    detail: 'computed in your browser',
+    label: 'Frame time',
+    detail: 'time to compute this frame',
     value: (frame) => ({ text: Math.round(frame.ms).toString(), unit: 'ms' }),
   },
 ];

@@ -124,20 +124,20 @@ export function createGuessDemo({ root, onNext }) {
       // A green site measured the very thing this panel is about, so there is
       // nothing to guess -- say so and send the reader one pixel sideways.
       windowBox.replaceChildren();
-      lead.textContent = `Row ${guess.y}, column ${guess.x} passed green: it measured ${measuredDn(
+      lead.textContent = `Row ${guess.y}, column ${guess.x} has a green filter. It measured ${measuredDn(
         guess.measured,
-      )}. Nothing here had to be invented.`;
+      )}. No guess is needed here.`;
       lead.dataset.kind = 'measured';
-      ask.textContent = 'Pick a red or blue site — those are the ones that have to guess.';
+      ask.textContent = 'Select a site with a red or blue filter. Those sites need a guess.';
       choices.hidden = true;
       return;
     }
 
     lead.dataset.kind = 'guessed';
-    lead.textContent = `Row ${guess.y}, column ${guess.x} passed ${guess.channelName} and measured ${measuredDn(
+    lead.textContent = `Row ${guess.y}, column ${guess.x} has a ${guess.channelName} filter. It measured ${measuredDn(
       guess.measured,
-    )}. It never saw green.`;
-    ask.textContent = 'Two green neighbours to either side. Which pair do you trust?';
+    )}. It did not measure green.`;
+    ask.textContent = 'Four green neighbours are shown. Select the row pair or the column pair.';
     choices.hidden = false;
     rowButton.mean.textContent = `mean ${guessedDn(guess.row.average)}`;
     columnButton.mean.textContent = `mean ${guessedDn(guess.column.average)}`;
@@ -173,11 +173,11 @@ export function createGuessDemo({ root, onNext }) {
     // truth. Without it the panel shows a right answer, not the cost of a wrong one.
     const other = direction === 'horizontal' ? guess.column.average : guess.row.average;
     const rows = [
-      { key: 'you', label: 'your pair', value: yours },
-      { key: 'other', label: 'the pair you passed on', value: other },
-      { key: 'bilinear', label: 'bilinear', value: guess.bilinear },
-      { key: 'hamiltonAdams', label: 'Hamilton–Adams', value: guess.hamiltonAdams },
-      { key: 'truth', label: 'the sensor would have measured', value: guess.truth, isTruth: true },
+      { key: 'you', label: 'Your pair', value: yours },
+      { key: 'other', label: 'Other pair', value: other },
+      { key: 'bilinear', label: 'Bilinear', value: guess.bilinear },
+      { key: 'hamiltonAdams', label: 'Hamilton-Adams', value: guess.hamiltonAdams },
+      { key: 'truth', label: 'Sensor measured', value: guess.truth, isTruth: true },
     ];
 
     scores.replaceChildren();
@@ -190,7 +190,7 @@ export function createGuessDemo({ root, onNext }) {
       value.textContent = `${row.isTruth ? measuredDn(row.value) : guessedDn(row.value)} DN`;
       if (!row.isTruth) {
         const error = el('span', 'guess-error');
-        error.textContent = `${signedDn(row.value - guess.truth)} DN off`;
+        error.textContent = `${signedDn(row.value - guess.truth)} DN from the sensor`;
         value.append(' ', error);
       }
       scores.append(term, value);
@@ -199,30 +199,34 @@ export function createGuessDemo({ root, onNext }) {
     const tookRow = guess.direction === 'horizontal';
     const base = tookRow ? guess.row.average : guess.column.average;
 
-    // With the gradient test switched off there is no choice to explain, so the
-    // sentence must not pretend there was one.
-    const explanation = guess.forced
-      ? guess.greenRule === 'average'
-        ? `The gradient test is off, so Hamilton–Adams averages all four green neighbours: ` +
-          `${measuredDn(base)} across the row, ${measuredDn(tookRow ? guess.column.average : guess.row.average)} down, ` +
-          `and neither axis is preferred.`
-        : `The gradient test is off, so Hamilton–Adams takes the ${
-            guess.greenRule === 'horizontal' ? 'row' : 'column'
-          } at every pixel — ${measuredDn(guess.row.gradient)} across the row and ` +
-          `${measuredDn(guess.column.gradient)} down are both ignored — then bends that mean by the ` +
-          `local curvature of red: ${guessedDn(base)} → ${guessedDn(guess.hamiltonAdams)}.`
-      : `Hamilton–Adams measures both directions — ${measuredDn(guess.row.gradient)} across the row, ` +
-        `${measuredDn(guess.column.gradient)} down — so it takes the ` +
-        `${tookRow ? 'row' : 'column'}, then bends that mean by the local curvature of red: ` +
-        `${guessedDn(base)} → ${guessedDn(guess.hamiltonAdams)}. `;
+    // With the gradient test off, no direction was chosen. Say that plainly.
+    let explanation;
+    if (guess.forced && guess.greenRule === 'average') {
+      explanation =
+        'The gradient test is off. Hamilton-Adams uses the mean of four green neighbours. ' +
+        'It gives no extra weight to the row or the column.';
+    } else if (guess.forced) {
+      const axis = guess.greenRule === 'horizontal' ? 'row' : 'column';
+      explanation =
+        `The gradient test is off. Hamilton-Adams takes the ${axis} at every site. ` +
+        `It ignores the gradients: ${measuredDn(guess.row.gradient)} across the row and ` +
+        `${measuredDn(guess.column.gradient)} down. It then adds the curvature of red. ` +
+        `The mean goes from ${guessedDn(base)} to ${guessedDn(guess.hamiltonAdams)}.`;
+    } else {
+      const axis = tookRow ? 'row' : 'column';
+      explanation =
+        `Hamilton-Adams compares two gradients. Row: ${measuredDn(guess.row.gradient)}. ` +
+        `Column: ${measuredDn(guess.column.gradient)}. It takes the ${axis}. ` +
+        `It then adds the curvature of red. The mean changes from ${guessedDn(base)} ` +
+        `to ${guessedDn(guess.hamiltonAdams)}.`;
+    }
 
     verdict.textContent =
-      `You took the ${direction === 'horizontal' ? 'row' : 'column'}. ` +
-      explanation +
-      (guess.forced ? ' ' : '') +
+      `You selected the ${direction === 'horizontal' ? 'row' : 'column'}. ` +
+      explanation + '\n' +
       verdictLine(guess, yours) +
       (!guess.forced && tookRow !== (direction === 'horizontal')
-        ? ' Your pair and its pair are not the same pair.'
+        ? '\nThe algorithm chose a different pair.'
         : '');
   }
 
@@ -234,27 +238,19 @@ export function createGuessDemo({ root, onNext }) {
    */
   function verdictLine(guess, yours) {
     const contenders = [
-      { label: 'you', error: Math.abs(yours - guess.truth) },
-      { label: 'bilinear', error: Math.abs(guess.bilinear - guess.truth) },
-      { label: 'Hamilton–Adams', error: Math.abs(guess.hamiltonAdams - guess.truth) },
+      { label: 'You', error: Math.abs(yours - guess.truth) },
+      { label: 'Bilinear', error: Math.abs(guess.bilinear - guess.truth) },
+      { label: 'Hamilton-Adams', error: Math.abs(guess.hamiltonAdams - guess.truth) },
     ].sort((a, b) => a.error - b.error);
 
     const [best, second] = contenders;
-    // Method names are lowercase in the table, but this sentence starts with one.
-    const name = (label) => (label === 'you' ? 'You' : `${label[0].toUpperCase()}${label.slice(1)}`);
-    const verb = (label) => (label === 'you' ? 'were' : 'was');
+    const closest = `${measuredDn(best.error)} DN from the sensor value`;
 
-    if (best.error < 0.5) return `${name(best.label)} ${verb(best.label)} exactly right.`;
-
-    const closer = `${measuredDn(best.error)} DN from the truth`;
-
-    // Two methods that land within a level of each other are a tie, and saying so
-    // is more honest than naming a winner on a rounding difference.
+    if (best.error < 0.5) return `${best.label} is right.`;
     if (Math.abs(best.error - second.error) < 1) {
-      return `${name(best.label)} and ${second.label} were both ${closer}.`;
+      return `${best.label} and ${second.label} are both ${closest}.`;
     }
-
-    return `${name(best.label)} ${verb(best.label)} closest: ${closer}.`;
+    return `${best.label} is closest: ${closest}.`;
   }
 
   next.addEventListener('click', () => onNext());
