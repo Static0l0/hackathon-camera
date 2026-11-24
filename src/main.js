@@ -219,16 +219,20 @@ if (elements.dockToggle && elements.dock) {
 // sees the effect without taking their eyes off it. This is a blit of bytes the
 // worker already sent, so it costs no engine work.
 const dockContext = elements.dockCanvas?.getContext('2d');
+// Reused across frames: allocating a scratch canvas per frame would make a small
+// preview more expensive than the engine that produced the picture.
+const dockScratch = document.createElement('canvas');
+const dockScratchContext = dockScratch.getContext('2d');
 function paintDock(frame) {
-  if (!dockContext || !frame?.display) return;
+  if (!dockContext || !dockScratchContext || !frame?.display) return;
   const { width, height, display } = frame;
-  const image = new ImageData(display, width, height);
-  const scratch = document.createElement('canvas');
-  scratch.width = width;
-  scratch.height = height;
-  scratch.getContext('2d').putImageData(image, 0, 0);
+  if (dockScratch.width !== width || dockScratch.height !== height) {
+    dockScratch.width = width;
+    dockScratch.height = height;
+  }
+  dockScratchContext.putImageData(new ImageData(display, width, height), 0, 0);
   dockContext.imageSmoothingEnabled = true;
-  dockContext.drawImage(scratch, 0, 0);
+  dockContext.drawImage(dockScratch, 0, 0);
 }
 
 const sound = createSound();
