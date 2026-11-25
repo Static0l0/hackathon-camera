@@ -1676,7 +1676,9 @@ main {
   display: grid;
   gap: 10px;
   margin-top: 88px;
-  padding-block: 22px 44px;
+  /* Room for the strip along the bottom edge, so the last line of the page can
+     always scroll clear of it. */
+  padding-block: 22px 124px;
   border-top: 1px solid var(--line-2);
   font-family: var(--mono);
   font-size: 11.5px;
@@ -1700,6 +1702,101 @@ main {
 
 .colophon-note {
   max-width: 62ch;
+}
+
+/* ------------------------------------------------------------------- tray */
+
+/* Three settings carried down the page, for the sections where the console is
+   long gone. It sits in the bottom-left corner, aligned to the content column,
+   and only exists once the reader is past the stack. */
+.stack-end {
+  display: block;
+  height: 1px;
+  margin-top: -1px;
+}
+
+/* A tray that floats just above the bottom edge, on the same 1160px column as
+   everything else. It covers the least valuable band of the screen instead of
+   sitting on the plate you are reading, and the gap under it keeps it from reading
+   as part of the page's own edge. */
+.tray {
+  position: fixed;
+  z-index: 50;
+  left: max(16px, calc(50% - 580px));
+  bottom: 18px;
+  width: min(1160px, calc(100vw - 32px));
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  /* One step off the page, the way a card is: the tray is a surface, not a hole. */
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  backdrop-filter: blur(10px);
+  /* A little lift, so content passing underneath reads as passing underneath a
+     tool rather than disappearing into a bug. */
+  box-shadow: 0 18px 40px -26px color-mix(in srgb, var(--ink) 70%, transparent);
+  animation: tray-in 220ms var(--ease) both;
+}
+
+.tray[hidden] {
+  display: none;
+}
+
+@keyframes tray-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tray-grid {
+  display: grid;
+  /* Six equal columns: a fader and a menu both need about this much before the
+     label starts colliding with its own value. Narrower screens drop two controls
+     rather than squeezing all six (see the media queries below). */
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px 18px;
+  width: 100%;
+  padding: 10px 24px 12px;
+}
+
+/* Label above its control, as in the console: six inline rows would run off the
+   edge before the sixth one fits. */
+.tray-grid .control {
+  margin: 0;
+  gap: 2px;
+}
+
+.tray-grid .control-label {
+  font-size: 11.5px;
+}
+
+.tray-grid .control-value {
+  font-size: 11px;
+}
+
+.tray-grid select {
+  height: 28px;
+}
+
+.tray-grid input[type='range'] {
+  width: 100%;
+  height: 26px;
+}
+
+/* Two of the six are the first to go when the columns get too narrow to read:
+   exposure is a single idea, and the console is one scroll away for the rest. */
+@media (max-width: 1180px) {
+  .tray-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .tray-grid .control:nth-child(3),
+  .tray-grid .control:nth-child(4) {
+    display: none;
+  }
 }
 
 /* Live announcements for screen readers only: the numbers are already on the
@@ -1792,7 +1889,6 @@ main {
   gap: 18px;
   background: var(--paper);
 }
-
 #loading[hidden] {
   display: none !important;
 }
@@ -1823,8 +1919,7 @@ main {
 
 @media (max-width: 940px) {
   :root {
-    --gutter: 28px;
-  }
+    --gutter: 28px;  }
 
   .cover-head,
   .section-head {
@@ -2015,6 +2110,14 @@ main {
   .explain-head {
     flex-direction: column;
     gap: 4px;
+  }
+}
+
+/* On a narrow screen a floating tray would cover the thing you are reading, and
+   the page is short enough to scroll back to the console. */
+@media (max-width: 940px) {
+  .tray {
+    display: none;
   }
 }
 

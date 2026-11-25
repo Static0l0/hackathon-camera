@@ -73,11 +73,19 @@ Five sections, in the order the story needs:
 
 **Controls:** the controls sit in a three-column console directly under the
 specimen plate — capture, reconstruction, measurement — so a change and its result
-are never more than one screen apart. The two live numbers in the top bar stay
-visible while you read. Drag the divider or click a pixel in the plate; every
-slider is keyboard-operable. Sound is on by default — quiet, filtered mechanical
-clicks (no beeps) — and can be muted in the footer. Settings are written to the URL
-hash, so a link to a configuration reloads the exact same frame.
+are never more than one screen apart. Once that console scrolls off the top of the
+screen, the settings the rest of the page still answers to follow the reader down
+in a tray that floats just above the bottom edge, lined up with the same content
+column: light level, shutter, ISO, aperture, scene and demosaic method. It covers
+the least valuable band of the screen instead of sitting on the plate being read,
+the gap under it keeps it from reading as part of the page edge, and it starts
+with the sensor-stack section. It drops ISO and aperture below 1180px so the
+remaining four keep their room, and is gone below 940px. The two live numbers in
+the top bar stay visible while
+you read. Drag the divider or click a pixel in the plate; every slider is
+keyboard-operable. Sound is on by default — quiet, filtered mechanical clicks (no
+beeps) — and can be muted in the footer. Settings are written to the URL hash, so a
+link to a configuration reloads the exact same frame.
 
 ### The pipeline, in the order light travels
 

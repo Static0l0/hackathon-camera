@@ -148,18 +148,22 @@ const CONTROLS = [
  *   settings: object,
  *   onChange: (patch: object) => void,
  *   group?: string,
- * }} options
+ *   keys?: string[],
+ *   idPrefix?: string,
+ * }} options `keys` mounts a subset (the tray takes three of the nine), and
+ *   `idPrefix` keeps ids unique when the same control is mounted twice.
  * @returns {{sync: (settings: object) => void}}
  */
-export function createControls({ root, settings, onChange, group }) {
+export function createControls({ root, settings, onChange, group, keys, idPrefix = 'control' }) {
   /** @type {Map<string, {element: HTMLInputElement|HTMLSelectElement, definition: object}>} */
   const entries = new Map();
 
   for (const definition of CONTROLS) {
     // One schema, mounted in several places: each section shows only its own.
     if (group && definition.group !== group) continue;
+    if (keys && !keys.includes(definition.key)) continue;
 
-    const id = `control-${definition.key}`;
+    const id = `${idPrefix}-${definition.key}`;
     const wrapper = document.createElement('div');
     wrapper.className = definition.type === 'checkbox' ? 'control control-check' : 'control';
 
@@ -171,9 +175,16 @@ export function createControls({ root, settings, onChange, group }) {
     title.textContent = definition.label;
     label.append(title);
 
-    const readout = document.createElement('span');
-    readout.className = 'control-value';
-    label.append(readout);
+    // A fader shows only where it is, so it needs the number beside it. A menu
+    // and a checkbox already display their own value; repeating it next to the
+    // label said the same thing twice in the same row.
+    const readout = definition.type === 'range' || definition.type === 'choice'
+      ? document.createElement('span')
+      : null;
+    if (readout) {
+      readout.className = 'control-value';
+      label.append(readout);
+    }
 
     const element = buildInput(definition, id, settings[definition.key]);
     wrapper.append(label, element);

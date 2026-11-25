@@ -25,6 +25,18 @@ replaces the paint scheme:
   figures only, never below 11px.
 - **Controls are instruments, not a dashboard.** They sit in a three-column
   console directly under the plate they change, each column sized to its job.
+- **Past the console, six settings travel.** Once the console scrolls off the top
+  of the screen, every section below still answers to the same six settings — light
+  level, shutter, ISO, aperture, scene, demosaic method — so they follow the reader
+  in a tray that floats just above the bottom edge, lined up with the same content
+  column, the way the masthead runs along the top. A floating panel was the first
+  idea and lost: anything with a body sits on the plate you are reading, while the
+  lowest band of the screen is the least valuable. A side rail was the second idea
+  and cannot work here — at 1440 the page leaves 140px gutters, so a 168px rail
+  lands on the text. The 18px gap under the tray is what makes it a tool rather
+  than part of the page's own edge. The tray drops ISO and aperture below 1180px
+  (the four left keep their room) and disappears entirely below 940px, where it
+  would sit on the text.
 - **Two grounds, one page.** The same bench after dark: the tokens swap, the
   plates get darker than the page instead of lighter, and the three data colours
   are lifted so they still work as marks on a dark ground. Dark is the default,

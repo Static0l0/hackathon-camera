@@ -180,6 +180,11 @@
           <li><span class="stack-index">03</span><span>Photodiode — counts electrons</span></li>
           <li><span class="stack-index">04</span><span>Circuit — reads the count</span></li>
         </ol>
+
+        <!-- The tray below appears once this marker has been scrolled past: from
+             here on the console is a long way up the page, and every section left
+             still answers to the same three settings. -->
+        <span class="stack-end" id="stack-end" aria-hidden="true"></span>
       </section>
 
       <section class="section" id="pixel" aria-labelledby="pixel-title">
@@ -353,6 +358,13 @@
         </div>
       </section>
     </main>
+
+    <!-- Three of the nine settings, carried along the rest of the page. It only
+         appears once the console is off the top of the screen, so there is never
+         a second copy of a control you can already see. -->
+    <aside class="tray" id="tray" aria-label="Frame controls" hidden>
+      <div class="tray-grid" id="tray-grid"></div>
+    </aside>
 
     <footer class="colophon">
       <div class="colophon-bar">

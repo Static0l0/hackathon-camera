@@ -67,6 +67,8 @@ const elements = {
   photonsReadout: byId('photons-readout'),
   reconstructGrid: byId('reconstruct-grid'),
   labGrid: byId('lab-grid'),
+  tray: byId('tray'),
+  trayGrid: byId('tray-grid'),
   readoutsGrid: byId('readouts-grid'),
   bayerCanvas: byId('bayer-canvas'),
   bayerCaption: byId('bayer-caption'),
@@ -346,6 +348,18 @@ const controls = [
   createControls({ root: elements.captureGrid, settings, onChange, group: 'capture' }),
   createControls({ root: elements.reconstructGrid, settings, onChange, group: 'reconstruct' }),
   createControls({ root: elements.labGrid, settings, onChange, group: 'lab' }),
+  // The same schema, six keys only, mounted again for the tray. It is the console
+  // minus the two lab settings (optical low-pass, white balance) and the green rule,
+  // which only matters once Hamilton-Adams is chosen — the six that change what the
+  // picture below looks like. The prefix keeps the ids unique, so each copy still
+  // has a working label.
+  createControls({
+    root: elements.trayGrid,
+    settings,
+    onChange,
+    keys: ['lightLevel', 'shutterSeconds', 'iso', 'fNumber', 'sceneName', 'method'],
+    idPrefix: 'tray-control',
+  }),
 ];
 
 /** Keep all three mounts showing the same settings. */
@@ -627,6 +641,35 @@ createThemeToggle({
   },
 });
 describeErrorScale(currentTheme());
+
+// The tray. The console sits directly under the plate; once it scrolls off the top
+// of the screen, every section below still answers to the same settings, so a
+// strip of them follows the reader down the page.
+(function setupTray() {
+  const { tray } = elements;
+  const consoleSection = document.querySelector('.console');
+  if (!tray || !consoleSection) return;
+
+  let queued = 0;
+
+  function measure() {
+    queued = 0;
+    // "The console is behind you" is the honest trigger: an element that goes from
+    // below the viewport to above it never intersects, so an IntersectionObserver
+    // has no state change to report. The strip covers only the bottom edge of the
+    // screen, and the footer carries enough bottom padding to clear it.
+    tray.hidden = consoleSection.getBoundingClientRect().bottom >= 0;
+  }
+
+  function schedule() {
+    if (queued) return;
+    queued = requestAnimationFrame(measure);
+  }
+
+  addEventListener('scroll', schedule, { passive: true });
+  addEventListener('resize', schedule);
+  measure();
+})();
 
 // First frame. No blank state: the page opens on a real image.
 client.requestFrame(settings);
