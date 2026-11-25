@@ -36,6 +36,9 @@
   --r-lg: 8px;
 
   --shadow-plate: 0 1px 1px rgba(25, 24, 20, 0.05), 0 20px 44px -30px rgba(25, 24, 20, 0.6);
+  /* A shadow, not an ink wash: shading a surface with the text colour turns into a
+     glow the moment the text colour is lighter than the page. */
+  --shadow-tray: 0 16px 36px -26px rgba(25, 24, 20, 0.4);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   --gutter: 40px;
@@ -64,6 +67,7 @@
   --data-b: #82a8f0;
 
   --shadow-plate: 0 1px 1px rgba(0, 0, 0, 0.6), 0 24px 50px -32px rgba(0, 0, 0, 0.95);
+  --shadow-tray: 0 16px 36px -22px rgba(0, 0, 0, 0.9);
 }
 
 /* The browser's own chrome follows the theme too. */
@@ -1732,8 +1736,8 @@ main {
   backdrop-filter: blur(10px);
   /* A little lift, so content passing underneath reads as passing underneath a
      tool rather than disappearing into a bug. */
-  box-shadow: 0 18px 40px -26px color-mix(in srgb, var(--ink) 70%, transparent);
-  animation: tray-in 220ms var(--ease) both;
+  box-shadow: var(--shadow-tray);
+  animation: tray-in 380ms var(--ease) both;
 }
 
 .tray[hidden] {
@@ -1743,7 +1747,7 @@ main {
 @keyframes tray-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
