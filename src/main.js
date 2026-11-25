@@ -654,11 +654,15 @@ describeErrorScale(currentTheme());
 
   function measure() {
     queued = 0;
-    // "The console is behind you" is the honest trigger: an element that goes from
-    // below the viewport to above it never intersects, so an IntersectionObserver
-    // has no state change to report. The strip covers only the bottom edge of the
-    // screen, and the footer carries enough bottom padding to clear it.
-    tray.hidden = consoleSection.getBoundingClientRect().bottom >= 0;
+    // The line at the foot of the first section is where the next one takes over the
+    // top of the screen. Timing it to "the console has left the viewport entirely"
+    // arrived late: the reader was already reading the four layers with no controls
+    // in reach. This arrives as that line crosses the top quarter of the screen.
+    // An IntersectionObserver cannot answer this — the boundary goes from below the
+    // viewport to above it without ever intersecting, which is not a state change it
+    // reports.
+    const behind = consoleSection.getBoundingClientRect().bottom;
+    tray.hidden = behind >= window.innerHeight * 0.25;
   }
 
   function schedule() {
