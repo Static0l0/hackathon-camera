@@ -6,15 +6,17 @@
  * in one widget: a red pixel really did record only red, and the other two
  * channels in that cell do not exist anywhere in the file.
  *
- * It reads the already-encoded `mosaicView` bytes for colour (so the tint logic
- * lives in exactly one place, the worker) and `dn` for the printed values.
+ * It tints each cell with the colour of the filter it sat under and prints `dn`
+ * for the value, so the patch reads as sensor data rather than as a screenshot.
  */
+
+import { cssRgb, luminance, readColour } from './cssColor.js';
 
 /** Pixels shown either side of the cursor: a 7x7 patch. */
 const RADIUS = 3;
 
-/** Screen pixels per sensor pixel. Big enough to fit four digits and a rule. */
-const CELL = 22;
+/** Screen pixels per sensor pixel. Big enough to fit four digits with a margin. */
+const CELL = 26;
 
 /** Gap between the cursor and the loupe, so the cursor never covers a cell. */
 const OFFSET = 20;
@@ -44,11 +46,20 @@ export function createLoupe({ root, canvas, caption }) {
    * @param {{clientX: number, clientY: number}} pointer
    */
   function show(frame, x, y, pointer) {
-    const { width, height, mosaicView, dn, mask } = frame;
+    const { width, height, dn, mask } = frame;
 
     // Unhide before measuring: a hidden element reports a zero size, which would
     // make `place` believe the loupe fits anywhere and push it off screen.
     root.hidden = false;
+
+    // Read the theme at draw time: the reader can switch it between two hovers.
+    const paper = readColour('--paper', [242, 239, 230]);
+    const ink = readColour('--ink', [25, 24, 20]);
+    const channels = [
+      readColour('--data-r', [200, 68, 44]),
+      readColour('--data-g', [63, 140, 74]),
+      readColour('--data-b', [47, 95, 176]),
+    ];
 
     context.clearRect(0, 0, size, size);
     context.textAlign = 'center';
@@ -69,22 +80,24 @@ export function createLoupe({ root, canvas, caption }) {
         }
 
         const i = py * width + px;
-        const j = i * 4;
 
-        const r = mosaicView[j];
-        const g = mosaicView[j + 1];
-        const b = mosaicView[j + 2];
+        // Each cell is a tint of the page in its own filter's colour, not the raw
+        // `rgb(dn, 0, 0)` triple: a full-strength primary glares against the rest
+        // of the page, and the reading is carried by how far the tint has gone.
+        const channel = channels[mask[i]];
+        const t = Math.min(1, dn[i] / 4095);
+        const tint = (base, colour) => Math.round(base + (colour - base) * t);
+        const cell = [tint(paper[0], channel[0]), tint(paper[1], channel[1]), tint(paper[2], channel[2])];
 
-        context.fillStyle = `rgb(${r} ${g} ${b})`;
+        context.fillStyle = cssRgb(cell);
         context.fillRect(left, top, CELL, CELL);
 
         // Numbers on the cells, not in a legend: the value is the evidence.
-        const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-        context.fillStyle = luminance > 0.5 ? '#0C0C0B' : '#E8E3D6';
+        context.fillStyle = cssRgb(luminance(cell) > 0.45 ? ink : paper);
         context.fillText(String(dn[i]), left + CELL / 2, top + CELL / 2);
 
         if (dx === 0 && dy === 0) {
-          context.strokeStyle = '#F5B301';
+          context.strokeStyle = cssRgb(ink);
           context.lineWidth = 2;
           context.strokeRect(left + 1, top + 1, CELL - 2, CELL - 2);
         }
@@ -92,7 +105,7 @@ export function createLoupe({ root, canvas, caption }) {
     }
 
     // Hairlines between cells, drawn last so they sit above the fills.
-    context.strokeStyle = 'rgba(12, 12, 11, 0.55)';
+    context.strokeStyle = `rgba(${ink[0]}, ${ink[1]}, ${ink[2]}, 0.45)`;
     context.lineWidth = 1;
     context.beginPath();
     for (let i = 1; i < RADIUS * 2 + 1; i += 1) {
@@ -104,9 +117,10 @@ export function createLoupe({ root, canvas, caption }) {
     context.stroke();
 
     const channelName = ['red', 'green', 'blue'][mask[y * width + x]];
-    caption.textContent =
-      `row ${y} · col ${x} — this pixel only measured ${channelName}: ${dn[y * width + x]}. ` +
-      'The other two colours were never here.';
+    // Short enough to sit in three lines under a 154px grid. The full sentence
+    // ("the other two colours have no reading here") is already in the status
+    // line, where there is room to say it.
+    caption.textContent = `row ${y} · col ${x}\n${channelName} only, ${dn[y * width + x]} DN`;
 
     place(pointer);
   }

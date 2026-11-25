@@ -14,10 +14,13 @@
 import './style.css';
 import { createSound } from './audio.js';
 
-import { DEFAULT_SETTINGS, nearestColourSite } from './engine/index.js';import { createBayerDiagram } from './view/bayerDiagram.js';
+import { DEFAULT_SETTINGS, nearestColourSite } from './engine/index.js';
+import { createBayerDiagram } from './view/bayerDiagram.js';
 import { createCanvasPainter } from './view/canvasPainter.js';
 import { createEngineClient } from './view/client.js';
 import { createControls } from './view/controls.js';
+import { readColour } from './view/cssColor.js';
+import { createThemeToggle, currentTheme } from './view/theme.js';
 import { createExplainPanel } from './view/explainPanel.js';
 import { createGuessDemo } from './view/guessDemo.js';
 import { createErrorHeatmap, createMethodTable } from './view/guessPanel.js';
@@ -83,9 +86,8 @@ const elements = {
   printRetake: byId('print-retake'),
   printFrame: byId('print-frame'),
   printTag: byId('print-tag'),
-  dock: byId('dock'),
-  dockCanvas: byId('dock-canvas'),
-  dockToggle: byId('dock-toggle'),
+  errorNote: byId('error-note'),
+  themeToggle: byId('theme-toggle'),
   topPsnr: byId('top-psnr'),
   topSnr: byId('top-snr'),
 };
@@ -116,7 +118,12 @@ async function upgradeToWebgl(viewer) {
 
   try {
     const { createThreePainter } = await import('./view/threePainter.js');
-    const painter = createThreePainter({ container: elements.viewerContainer });
+    // The plate colour, not a hardcoded night: the page can be paper or graphite.
+    const [nr, ng, nb] = readColour('--night', [23, 21, 15]);
+    const painter = createThreePainter({
+      container: elements.viewerContainer,
+      groundColour: (nr << 16) | (ng << 8) | nb,
+    });
     elements.viewerContainer.classList.add('is-webgl');
     elements.viewerContainer.classList.remove('is-canvas');
     viewer.setPainter(painter);
@@ -205,36 +212,6 @@ let firstFrame = true;
 const motion = createMotion();
 motion.reveal([...document.querySelectorAll('[data-reveal]')]);
 
-/** Sound: off by default, turned on by the visitor. */
-// The dock is the only place controls live, so on narrow screens it slides in
-// from the right instead of forcing a second scroll past an explanation.
-if (elements.dockToggle && elements.dock) {
-  elements.dockToggle.addEventListener('click', () => {
-    const open = elements.dock.classList.toggle('is-open');
-    elements.dockToggle.setAttribute('aria-expanded', String(open));
-  });
-}
-
-// A tiny 2D copy of the frame beside the controls: a person changes a slider and
-// sees the effect without taking their eyes off it. This is a blit of bytes the
-// worker already sent, so it costs no engine work.
-const dockContext = elements.dockCanvas?.getContext('2d');
-// Reused across frames: allocating a scratch canvas per frame would make a small
-// preview more expensive than the engine that produced the picture.
-const dockScratch = document.createElement('canvas');
-const dockScratchContext = dockScratch.getContext('2d');
-function paintDock(frame) {
-  if (!dockContext || !dockScratchContext || !frame?.display) return;
-  const { width, height, display } = frame;
-  if (dockScratch.width !== width || dockScratch.height !== height) {
-    dockScratch.width = width;
-    dockScratch.height = height;
-  }
-  dockScratchContext.putImageData(new ImageData(display, width, height), 0, 0);
-  dockContext.imageSmoothingEnabled = true;
-  dockContext.drawImage(dockScratch, 0, 0);
-}
-
 const sound = createSound();
 const soundToggle = document.getElementById('sound-toggle');
 if (soundToggle) {
@@ -245,32 +222,6 @@ if (soundToggle) {
     soundToggle.textContent = sound.isEnabled() ? 'Sound on' : 'Sound off';
     soundToggle.setAttribute('aria-pressed', sound.isEnabled());
     if (sound.isEnabled()) sound.play('tap');
-  });
-}
-
-/** Help overlay: toggled by a fixed button, dismissed by its close button. */
-const helpToggle = document.getElementById('help-toggle');
-const helpPanel = document.getElementById('help');
-const helpClose = document.getElementById('help-close');
-if (helpToggle && helpPanel && helpClose) {
-  helpToggle.addEventListener('click', () => {
-    const hidden = helpPanel.hasAttribute('hidden');
-    helpPanel.toggleAttribute('hidden');
-    helpToggle.setAttribute('aria-expanded', String(hidden));
-    if (hidden) helpClose.focus();
-  });
-  helpClose.addEventListener('click', () => {
-    helpPanel.setAttribute('hidden', '');
-    helpToggle.setAttribute('aria-expanded', 'false');
-    helpToggle.focus();
-  });
-  // Clicking the dimmed backdrop dismisses the panel.
-  helpPanel.addEventListener('click', (event) => {
-    if (event.target === helpPanel) helpClose.click();
-  });
-  // Escape always closes it.
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && !helpPanel.hasAttribute('hidden')) helpClose.click();
   });
 }
 
@@ -286,8 +237,11 @@ const photonsReadout = createReadouts({
   only: ['snr', 'electrons', 'clipped'],
 });
 
-/** Everything, in the lab. */
-const readouts = createReadouts({ root: elements.readoutsGrid });
+/** The four numbers the lab records: quality, colour, how the frame was split, and time. */
+const readouts = createReadouts({
+  root: elements.readoutsGrid,
+  only: ['psnr', 'chroma', 'split', 'frame'],
+});
 
 const explainPanel = createExplainPanel({ root: elements.explainBody });
 
@@ -301,6 +255,20 @@ const heatmap = createErrorHeatmap({
   canvas: elements.errorCanvas,
   caption: elements.errorCaption,
 });
+
+/**
+ * The error map prints ink on paper in the light theme and light on card in the
+ * dark one, so the sentence under it has to say which direction is "more wrong".
+ * A claim about the picture cannot live only in the stylesheet.
+ *
+ * @param {'light' | 'dark'} theme
+ */
+function describeErrorScale(theme) {
+  if (!elements.errorNote) return;
+  const pole = theme === 'dark' ? 'Brighter' : 'Darker';
+  elements.errorNote.textContent =
+    `${pole} areas are larger errors. Choose the zone plate scene to see where the methods disagree most.`;
+}
 
 const methodTable = createMethodTable({
   tbody: elements.methodTable,
@@ -520,7 +488,6 @@ const client = createEngineClient({
   onFrame(frame) {
     currentFrame = frame;
     viewer.setFrame(frame);
-    paintDock(frame);
     readouts.update(frame);
     photonsReadout.update(frame);
     bayer.update(frame.coverage);
@@ -555,11 +522,16 @@ const client = createEngineClient({
     }
 
     elements.computeNote.textContent =
-      `Computed in this browser in ${Math.round(frame.ms)} ms. ${frame.width}×${frame.height} pixels. No data leaves the page.`;
+      `Computed in this browser in ${Math.round(frame.ms)} ms · ${frame.width}×${frame.height} pixels`;
 
     // The selected pixel keeps its explanation, recomputed against the frame
     // that is now on screen. Otherwise the panel would describe a stale image.
-    if (lastPick) client.requestExplain(lastPick.x, lastPick.y);
+    // With nothing selected yet it explains the middle of the frame, so the
+    // section never opens on a blank state.
+    if (!lastPick) {
+      lastPick = { x: Math.round(frame.width / 2), y: Math.round(frame.height / 2) };
+    }
+    client.requestExplain(lastPick.x, lastPick.y);
 
     // The guess panel always teaches from a real site, even before anyone clicks:
     // an empty section would be a blank state, and this page does not open on one.
@@ -594,10 +566,9 @@ const client = createEngineClient({
     // not a bare id, because the panel shows the year next to the name.
     explainPanel.show(explanation, explanation.method?.label ?? explanation.method?.id ?? '');
 
-    // The full arithmetic lives in the lab, thousands of pixels below. A reader
-    // who clicks once in the hook would otherwise see the loupe and nothing else,
-    // so the answer is echoed where they clicked.
-    elements.viewerStatus.textContent = `${explanation.sentence} See the lab for the full arithmetic.`;
+    // The full arithmetic lives far below. The sentence printed under the frame
+    // is the short answer, in the same words the lab panel will use.
+    elements.viewerStatus.textContent = explanation.sentence;
   },
 
   onFailure(message) {
@@ -608,7 +579,7 @@ const client = createEngineClient({
 });
 
 elements.viewerStatus.textContent =
-  'Drag the divider. Select a pixel to see its numbers.';
+  'Drag the divider, or focus it and use the arrow keys. Click a pixel for its numbers.';
 
 /** The site the guess panel is teaching from, or null before the first frame. */
 let guessPick = null;
@@ -641,6 +612,21 @@ function nextGuessSite() {
   // like with like; wrapping at the edge stops the button sticking at a border.
   requestGuessAt((guessPick.x + 16) % frame.width, guessPick.y);
 }
+
+// Theme. The attribute is already set by the head script, so this only wires the
+// switch and repaints what a stylesheet cannot: the canvas diagram and, if it is
+// on screen, the loupe's tinted cells.
+createThemeToggle({
+  button: elements.themeToggle,
+  onChange: (theme) => {
+    bayer.redraw();
+    heatmap.redraw();
+    describeErrorScale(theme);
+    loupe.hide();
+    client.requestFrame(settings);
+  },
+});
+describeErrorScale(currentTheme());
 
 // First frame. No blank state: the page opens on a real image.
 client.requestFrame(settings);

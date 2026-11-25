@@ -198,7 +198,7 @@ export function createPrintStudio({
     if (printedFrame) {
       status.textContent = `Frozen · ${source.width}×${source.height} · ISO ${s.iso} · 1/${Math.round(1 / s.shutterSeconds)} s`;
     } else {
-      status.textContent = 'Live. The frame follows the controls in the left panel.';
+      status.textContent = 'Live. The frame follows the controls above.';
     }
   }
 

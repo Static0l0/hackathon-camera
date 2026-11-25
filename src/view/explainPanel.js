@@ -8,20 +8,19 @@
  */
 
 /** Channel display colours. These are data colours: they mean R, G and B filters. */
-const CHANNEL_COLOURS = ['#D6452F', '#4C9A52', '#3566C9'];
+const CHANNEL_COLOURS = ['#C8442C', '#3F8C4A', '#2F5FB0'];
 
 /**
- * DN in a whole number reads better than a float: the ADC produced integers, and
- * the reconstruction of a *missing* channel is the only place a fraction appears.
+ * Whole DN only. The ADC produces integers, and the sentence above this grid
+ * already rounds a guessed channel to the nearest level; printing 1581.5 here
+ * and 1582 there invites the reader to wonder which number is real.
  *
  * @param {number} value
  * @returns {string}
  */
 function formatValue(value) {
   if (!Number.isFinite(value)) return '—';
-  return Math.abs(value - Math.round(value)) < 0.05
-    ? String(Math.round(value))
-    : value.toFixed(1);
+  return String(Math.round(value));
 }
 
 /**
@@ -149,7 +148,7 @@ export function createExplainPanel({ root }) {
     /**
      * @param {string} message
      */
-    clear(message = 'Select a pixel in the first image.') {
+    clear(message = 'Select a pixel in the frame at the top of the page.') {
       root.replaceChildren();
       const placeholder = document.createElement('p');
       placeholder.className = 'placeholder';

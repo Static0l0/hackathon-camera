@@ -62,7 +62,7 @@ const FRAGMENT_SHADER = /* glsl */ `
  * @param {{ container: HTMLElement, groundColour?: number }} options
  * @throws if a WebGL context cannot be created, so the caller can fall back
  */
-export function createThreePainter({ container, groundColour = 0x0c0c0b }) {
+export function createThreePainter({ container, groundColour = 0x17150f }) {
   const renderer = new THREE.WebGLRenderer({
     antialias: false,
     alpha: false,

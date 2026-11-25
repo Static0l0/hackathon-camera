@@ -7,26 +7,44 @@
  * printed in the caption, so a quiet frame and a broken frame do not look alike.
  */
 
-/** Ground, dim ember, hot. The only colour ramp in the page, because this is data.
- *  The middle stop is deliberately dark: most pixels in a good frame sit at a
- *  small error, and a ramp that reaches amber early turns the whole map gold. */
-const RAMP = [
-  [12, 12, 11],
-  [64, 50, 12],
-  [245, 179, 1],
-];
+import { currentTheme } from './theme.js';
+
+/** Printed in red ink: the paper where the guess was right, the ink where it was
+ *  wrong. One hue only — the map is a density print, not a heat map, so a frame
+ *  that reconstructs cleanly looks almost blank and a broken one fills up. The pale
+ *  first stop matters: most of a good frame sits at a small error, and a ramp that
+ *  turns crimson early prints the whole picture red.
+ *
+ *  The dark theme runs the same idea the other way — the sheet is the card colour
+ *  and the errors are the light — because "more ink" cannot mean "darker" on a dark
+ *  page. Which way the ramp reads is stated in the caption, which follows the theme. */
+const RAMPS = {
+  light: [
+    [242, 239, 230],
+    [227, 196, 187],
+    [200, 68, 44],
+    [46, 14, 11],
+  ],
+  dark: [
+    [28, 26, 21],
+    [96, 44, 36],
+    [226, 113, 90],
+    [255, 242, 236],
+  ],
+};
 
 /**
+ * @param {[number, number, number][]} ramp
  * @param {number} t 0..1
  * @returns {[number, number, number]}
  */
-function sampleRamp(t) {
+function sampleRamp(ramp, t) {
   const clamped = Math.min(1, Math.max(0, t));
-  const span = 1 / (RAMP.length - 1);
-  const index = Math.min(RAMP.length - 2, Math.floor(clamped / span));
+  const span = 1 / (ramp.length - 1);
+  const index = Math.min(ramp.length - 2, Math.floor(clamped / span));
   const local = (clamped - index * span) / span;
-  const from = RAMP[index];
-  const to = RAMP[index + 1];
+  const from = ramp[index];
+  const to = ramp[index + 1];
   return [
     Math.round(from[0] + (to[0] - from[0]) * local),
     Math.round(from[1] + (to[1] - from[1]) * local),
@@ -36,20 +54,27 @@ function sampleRamp(t) {
 
 /**
  * @param {{canvas: HTMLCanvasElement, caption: HTMLElement}} options
- * @returns {{update: (frame: object) => void}}
+ * @returns {{update: (frame: object) => void, redraw: () => void}}
  */
 export function createErrorHeatmap({ canvas, caption }) {
   const context = canvas.getContext('2d');
   if (!context) throw new Error('createErrorHeatmap: no 2d context');
 
-  // One lookup table, built once: the ramp is smooth, 256 steps are plenty.
-  const lut = Array.from({ length: 256 }, (_, i) => sampleRamp(i / 255));
+  let lastFrame = null;
+
+  /** 256 steps are plenty for a smooth ramp, and the table is cheap to rebuild. */
+  function buildLut() {
+    return Array.from({ length: 256 }, (_, i) => sampleRamp(RAMPS[currentTheme()], i / 255));
+  }
+
+  let lut = buildLut();
 
   /**
    * @param {object} frame the worker's frame payload
    */
   function update(frame) {
     const { width, height, errorMap, errorMax } = frame;
+    lastFrame = frame;
 
     // A dragging frame is published without an error map. Keep the last picture
     // (it is the same scene) but say so, instead of showing an old map as if it
@@ -69,13 +94,13 @@ export function createErrorHeatmap({ canvas, caption }) {
     const image = context.createImageData(width, height);
     const data = image.data;
 
-    // Square-root the ratio before picking a colour. Almost every pixel in a
-    // good frame sits in the first few levels of error, so a linear ramp shows
-    // nothing but black and hides exactly the structure this panel exists to
-    // show. The caption states the ramp, so nobody has to guess the scale.
+    // Linear, because the ramp now runs from paper (no error) to ink (maximum).
+    // Most of a good frame sits in the first few levels, so it prints almost
+    // blank — which is the point: a clean reconstruction is a blank sheet, and
+    // only the places the method got wrong carry ink.
     for (let i = 0; i < width * height; i++) {
       const ratio = errorMax > 0 ? Math.min(1, errorMap[i] / errorMax) : 0;
-      const [r, g, b] = lut[Math.round(Math.sqrt(ratio) * 255)];
+      const [r, g, b] = lut[Math.round(ratio * 255)];
       const at = i * 4;
       data[at] = r;
       data[at + 1] = g;
@@ -87,10 +112,16 @@ export function createErrorHeatmap({ canvas, caption }) {
     context.globalAlpha = 1;
 
     caption.textContent =
-      `0 to ${errorMax.toFixed(0)} levels · mean ${frame.metrics?.meanAbs?.toFixed(2) ?? '—'} · square-root ramp`;
+      `0 to ${errorMax.toFixed(0)} levels · mean ${frame.metrics?.meanAbs?.toFixed(2) ?? '—'} · linear scale`;
   }
 
-  return { update };
+  /** Repaint in the other ramp after a theme switch, without a new frame. */
+  function redraw() {
+    lut = buildLut();
+    if (lastFrame) update(lastFrame);
+  }
+
+  return { update, redraw };
 }
 
 /**

@@ -11,9 +11,20 @@
  * that two published algorithms disagree about how to invent it.
  */
 
-/** Measured values are integers; guesses are averages, so they keep a decimal. */
-const wholeDn = new Intl.NumberFormat('en-GB');
-const tenthDn = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 });
+import { readColour } from './cssColor.js';
+
+/**
+ * Measured values are integers; guesses are averages, so they keep a decimal.
+ *
+ * No thousands separators: a DN is a level on a 0–4095 scale, not a quantity,
+ * and the panel's own sentences print these numbers ungrouped. Grouping them
+ * here made the table read "1,774" directly above a sentence reading "1774".
+ */
+const wholeDn = new Intl.NumberFormat('en-GB', { useGrouping: false });
+const tenthDn = new Intl.NumberFormat('en-GB', {
+  useGrouping: false,
+  maximumFractionDigits: 1,
+});
 
 const measuredDn = (value) => wholeDn.format(Math.round(value));
 const guessedDn = (value) => tenthDn.format(Math.round(value * 10) / 10);
@@ -25,7 +36,13 @@ const signedDn = (value) => {
   return `${value > 0 ? '+' : '\u2212'}${size}`;
 };
 
-const CHANNEL_COLOURS = ['#d6452f', '#4c9a52', '#3566c9'];
+/** The window tints its cells with the filter colours, read from the tokens. */
+const CHANNEL_TOKENS = ['--data-r', '--data-g', '--data-b'];
+const CHANNEL_FALLBACKS = [
+  [200, 68, 44],
+  [63, 140, 74],
+  [47, 95, 176],
+];
 const CHANNEL_NAMES = ['red', 'green', 'blue'];
 
 /**
@@ -154,7 +171,8 @@ export function createGuessDemo({ root, onNext }) {
       tile.textContent = measuredDn(cell.value);
       // The tint is the filter that passed this value. It is data, not decoration,
       // so it uses the same three colours as every other readout in the page.
-      tile.style.backgroundColor = withAlpha(CHANNEL_COLOURS[cell.channel], 0.3);
+      const colour = readColour(CHANNEL_TOKENS[cell.channel], CHANNEL_FALLBACKS[cell.channel]);
+      tile.style.backgroundColor = `rgba(${colour[0]}, ${colour[1]}, ${colour[2]}, 0.3)`;
       tile.title = `${CHANNEL_NAMES[cell.channel]} filter`;
       if (cell.isCentre) tile.classList.add('is-centre');
       else if (cell.y === guess.y) tile.classList.add('is-row');
@@ -288,15 +306,4 @@ function directionButton(label, direction) {
   const mean = el('span', 'guess-choice-mean');
   root.append(title, ' ', mean);
   return { root, mean };
-}
-
-/**
- * @param {string} hex e.g. '#4c9a52'
- * @param {number} alpha 0..1
- */
-function withAlpha(hex, alpha) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }

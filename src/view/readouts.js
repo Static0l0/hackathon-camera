@@ -27,7 +27,7 @@ function decibels(value) {
 const READOUTS = [
   {
     id: 'snr',
-    label: 'Grey SNR',
+    label: 'SNR at mid-grey',
     detail: 'signal to noise for a mid-grey patch',
     value: (frame) => ({
       text: decibels(frame.metrics.midGreySnrDb),
@@ -75,10 +75,9 @@ const READOUTS = [
     label: 'Filters',
     detail: 'red, green, blue sites',
     value: (frame) => ({
-      text: `${Math.round(frame.coverage.red * 100)} · ${Math.round(
+      text: `${Math.round(frame.coverage.red * 100)}% · ${Math.round(
         frame.coverage.green * 100,
-      )} · ${Math.round(frame.coverage.blue * 100)}`,
-      unit: '%',
+      )}% · ${Math.round(frame.coverage.blue * 100)}%`,
     }),
   },
   {

@@ -19,7 +19,7 @@ npm run dev        # http://127.0.0.1:5173
 ```
 
 ```bash
-npm test           # the engine's test suite (Vitest, 61 tests)
+npm test           # the engine's test suite (Vitest, 80 tests)
 npm run build      # production build into dist/
 npm run preview    # serve the build exactly as the deploy does
 ```
@@ -71,12 +71,13 @@ Five sections, in the order the story needs:
    copy of the frame, so slider drags afterwards cannot rewrite your print. This
    closes the argument: the camera recorded numbers; the print is a choice.
 
-**Controls:** all controls live in the left dock and stay there as you scroll; the
-frame above them updates as you move each one. Drag the divider or click a pixel in
-fig. 01; every slider is keyboard-operable. Sound is on by default — quiet, filtered
-mechanical clicks (no beeps) — and can be muted in the footer. Press **How to use**
-in the top bar for a short guide. Settings are written to the URL hash, so a link
-to a configuration reloads the exact same frame.
+**Controls:** the controls sit in a three-column console directly under the
+specimen plate — capture, reconstruction, measurement — so a change and its result
+are never more than one screen apart. The two live numbers in the top bar stay
+visible while you read. Drag the divider or click a pixel in the plate; every
+slider is keyboard-operable. Sound is on by default — quiet, filtered mechanical
+clicks (no beeps) — and can be muted in the footer. Settings are written to the URL
+hash, so a link to a configuration reloads the exact same frame.
 
 ### The pipeline, in the order light travels
 
@@ -194,19 +195,30 @@ At the shipped defaults (384×216, ISO 100, light 40 %, σ 0.6) the page reports
 - **Metrics are skipped while you drag.** The PSNR and colour-error readouts print
   `—` with a pending marker and settle 240 ms after the last input, rather than
   showing a stale number. The pictures themselves are always live.
-- **The data colours are not all AA-contrast.** Red (4.43:1) and blue (3.63:1) fall
-  below WCAG AA against the ground, so they are used for fills and swatches only —
-  never for text. Text, dim text and the amber accent pass (15.27:1, 5.65:1,
-  10.56:1).
+- **The data colours are not all AA-contrast.** Red (4.23:1) and green (3.61:1)
+  fall below WCAG AA against the paper, so they are used for fills and swatches
+  only — never for text. Every word is ink (`#191814`, 15.45:1). The lifted dark
+  theme versions clear AA on their own ground. The full table, including the two
+  known exceptions, is in `DESIGN_NOTES.md`.
+- **There is no accent colour.** The page is ink on paper, and the only saturated
+  things on it are the R/G/B data and the photographs. Emphasis comes from ink
+  fills and hairline weight.
+- **Two grounds, one switch.** Dark is the default and the paper version is one
+  click away in the masthead; the choice is stored and applied before the first
+  paint, so a reload never flashes the wrong ground. Canvas work (the Bayer
+  diagram, the loupe, the error map, the three.js clear colour) reads its colours
+  from the same custom properties rather than repeating them, so a theme change
+  repaints everything — including the direction of the error ramp, which has to
+  stay "more error = more of something" on both grounds.
 - **No rolling shutter and no X-Trans.** Both were listed as stretch goals in the
   brief and neither is implemented; four Bayer demosaicers and one sensor model is
   the whole of it.
 - **The text scene is drawn with a 5×7 bitmap font**, not canvas text, so the engine
   runs unchanged in Node.
-- **A full-page screenshot is not a valid picture of a scroll-driven state.** The
-  sensor stack animates on `ScrollTrigger`; capturing beyond the viewport resizes the
-  page and re-fires the trigger. Any visual check of that section has to scroll to it
-  and wait.
+- **A full-page screenshot is not a valid picture of the sensor stack.** The stack
+  only renders while it is on screen (`IntersectionObserver`), so a capture beyond
+  the viewport photographs an untextured sheet. Any visual check of that section
+  has to scroll to it, wait for the patch, and only then capture.
 
 ---
 
@@ -216,7 +228,8 @@ At the shipped defaults (384×216, ISO 100, light 40 %, σ 0.6) the page reports
 src/engine/     pure maths: prng, scene, exposure, cfa, demosaic/, develop, metrics, explain, pipeline
 src/worker/     engine.worker.js — runs the engine, transfers buffers back
 src/view/       splitView, threePainter, canvasPainter, sensorStack, loupe, controls,
-                readouts, explainPanel, bayerDiagram, guessPanel, printStudio, motion, scroll, client
+                readouts, explainPanel, bayerDiagram, guessPanel, guessDemo,
+                printStudio, motion, client
 src/audio.js    procedural Web Audio — shutter, tap, develop, error; off by default
 tests/          61 Vitest tests, engine only
 scripts/        report.mjs (measurements), shot.mjs (headless CDP screenshots + probes),

@@ -6,267 +6,370 @@
     <title>The Mosaic — what a camera really records</title>
     <meta
       name="description"
-      content="A camera records one colour per pixel in very few photons. Move the light and watch the reconstruction change, computed live in your browser."
+      content="A camera records one colour per pixel and invents the other two. Move the light, pick a pixel, watch the reconstruction happen in this browser."
     />
-    <meta name="theme-color" content="#0c0c0b" />
+    <meta name="theme-color" content="#f2efe6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#131210" media="(prefers-color-scheme: dark)" />
+    <script>
+      // The theme is set before the first paint, so a reload never flashes the
+      // wrong ground. Dark is the default: this page is read at night, next to
+      // the screen it is about. A stored choice always wins.
+      (() => {
+        let theme = 'dark';
+        try {
+          if (localStorage.getItem('mosaic-theme') === 'light') theme = 'light';
+        } catch {
+          /* Private mode: fall back to the default. */
+        }
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230c0c0b'/%3E%3Crect x='2' y='2' width='6' height='6' fill='%23d6452f'/%3E%3Crect x='8' y='2' width='6' height='6' fill='%234c9a52'/%3E%3Crect x='2' y='8' width='6' height='6' fill='%234c9a52'/%3E%3Crect x='8' y='8' width='6' height='6' fill='%233566c9'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23f2efe6'/%3E%3Crect x='2' y='2' width='6' height='6' fill='%23c8442c'/%3E%3Crect x='8' y='2' width='6' height='6' fill='%233f8c4a'/%3E%3Crect x='2' y='8' width='6' height='6' fill='%233f8c4a'/%3E%3Crect x='8' y='8' width='6' height='6' fill='%232f5fb0'/%3E%3C/svg%3E"
     />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to the explanation</a>
 
-    <header class="topbar">
-      <div class="topbar-brand">
-        <span class="brand-mark" aria-hidden="true">
-          <i></i><i></i><i></i><i></i>
-        </span>
-        <strong>The Mosaic</strong>
+    <header class="masthead">
+      <div class="masthead-inner">
+        <a class="wordmark" href="#sensor">
+          <span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span>The Mosaic</span>
+        </a>
+
+        <nav class="masthead-nav" aria-label="Sections">
+          <a href="#sensor">Sensor</a>
+          <a href="#pixel">Pixel</a>
+          <a href="#guess">Guess</a>
+          <a href="#print">Print</a>
+        </nav>
+
+        <dl class="masthead-live" id="top-stats" aria-live="polite">
+          <div><dt>PSNR</dt><dd id="top-psnr">—</dd></div>
+          <div><dt>SNR</dt><dd id="top-snr">—</dd></div>
+        </dl>
+
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="true">
+          Dark
+        </button>
       </div>
-      <p class="topbar-idea">Each pixel sees one colour. The camera guesses the other two.</p>
-      <dl class="topbar-stats" id="top-stats" aria-live="polite">
-        <div><dt>PSNR</dt><dd id="top-psnr">—</dd></div>
-        <div><dt>SNR</dt><dd id="top-snr">—</dd></div>
-      </dl>
-      <button id="help-toggle" class="topbar-button" aria-expanded="false">How to use</button>
-      <button id="dock-toggle" class="topbar-button dock-toggle" aria-expanded="false" aria-controls="dock">Controls</button>
     </header>
 
-    <div class="layout">
-      <!-- The controls never scroll away. Change a setting, see the result in the
-           preview right above it and in the numbers below it — no jumping between
-           a control in one section and its output in another. -->
-      <aside class="dock" id="dock" aria-label="Controls">
-        <figure class="dock-preview">
-          <canvas id="dock-canvas" width="384" height="216" role="img" aria-label="Current frame"></canvas>
-          <figcaption>Current frame</figcaption>
-        </figure>
+    <main id="main">
+      <section class="cover" id="sensor" aria-labelledby="cover-title">
+        <div class="cover-head">
+          <h1 id="cover-title" data-reveal>A camera records one colour per pixel</h1>
+          <div class="cover-note">
+            <p>
+              Each site behind the lens counts photons through one red, green or blue
+              filter, so two of the three numbers in every pixel were never measured.
+              Software writes them.
+            </p>
+            <p class="mono-note">
+              Everything below is computed in your browser as you change the light.
+            </p>
+          </div>
+        </div>
 
-        <fieldset class="dock-group">
-          <legend>Light</legend>
-          <div id="capture-grid"></div>
-          <dl class="dock-readout" id="photons-readout" aria-live="polite"></dl>
-        </fieldset>
-
-        <fieldset class="dock-group">
-          <legend>Reconstruction</legend>
-          <div id="reconstruct-grid"></div>
-        </fieldset>
-
-        <fieldset class="dock-group">
-          <legend>Lab</legend>
-          <div id="lab-grid"></div>
-        </fieldset>
-
-        <dl class="dock-readout dock-readout-all" id="readouts-grid" aria-live="polite"></dl>
-      </aside>
-
-      <main id="main">
-        <header class="intro">
-          <h1>Your camera never recorded a colour photo</h1>
-          <p>
-            Each pixel measured one colour, using only a few photons. Software guessed
-            the other two colours. Drag the divider to see what the sensor kept.
-          </p>
-        </header>
-
-        <section class="section" id="hook" aria-labelledby="hook-title">
-          <h2 id="hook-title">What the sensor kept</h2>
-          <p class="lede">
-            Left: the numbers from the sensor. Right: the photo you see. Drag the line
-            between them.
-          </p>
-
+        <figure class="plate plate-viewer">
           <div class="viewer" id="viewer">
             <div class="viewer-canvas" id="viewer-canvas">
               <canvas id="canvas-mosaic" aria-hidden="true"></canvas>
               <canvas id="canvas-developed" aria-hidden="true"></canvas>
-              <div class="divider" id="divider" role="slider" tabindex="0"
-                   aria-label="Reveal more of the raw mosaic or the developed photo"
-                   aria-valuemin="2" aria-valuemax="98" aria-valuenow="50">
+              <div
+                class="divider"
+                id="divider"
+                role="slider"
+                tabindex="0"
+                aria-label="Divider between the sensor data and the developed photograph"
+                aria-valuemin="2"
+                aria-valuemax="98"
+                aria-valuenow="50"
+              >
                 <span class="divider-line" aria-hidden="true"></span>
                 <span class="divider-grip" aria-hidden="true"></span>
               </div>
               <span class="viewer-tag viewer-tag-left">sensor</span>
               <span class="viewer-tag viewer-tag-right">developed</span>
+              <span class="scale" aria-hidden="true">
+                <span class="scale-label">48 sites</span>
+                <span class="scale-bar"></span>
+              </span>
             </div>
+
             <div class="loupe" id="loupe" hidden>
               <canvas id="loupe-canvas" width="154" height="154"></canvas>
               <p class="loupe-caption" id="loupe-caption"></p>
             </div>
           </div>
-          <p class="status-line" id="viewer-status" role="status">
-            Drag the divider. Select a pixel to see its numbers.
-          </p>
-        </section>
 
-        <section class="section" id="photons" aria-labelledby="photons-title">
-          <h2 id="photons-title">A pixel has four layers</h2>
-          <p class="lede">
-            Light passes through a lens and a colour filter. A sensor site counts the
-            electrons. A circuit reads the count. Each dot is part of that count. When
-            there are too many dots, the page draws fewer and prints the rate below.
-          </p>
+          <figcaption class="plate-caption">
+            <p>
+              Left of the divider: the numbers the sensor recorded. Right of it: the
+              photograph those numbers became.
+            </p>
+            <span class="plate-meta">384 × 216 sites · 12 bit</span>
+          </figcaption>
+        </figure>
 
-          <div class="stack-stage" id="stack-stage">
-            <canvas id="stack-canvas"></canvas>
+        <p class="status-line" id="viewer-status" role="status">
+          Drag the divider, or focus it and use the arrow keys. Click a pixel for its
+          numbers.
+        </p>
+
+        <section class="console" aria-label="Controls for the frame above">
+          <div class="console-col">
+            <h2 class="console-title">Capture</h2>
+            <div class="field-grid" id="capture-grid"></div>
           </div>
 
-          <div class="control stack-control">
+          <div class="console-col">
+            <h2 class="console-title">Reconstruction</h2>
+            <div id="reconstruct-grid"></div>
+          </div>
+
+          <div class="console-col">
+            <h2 class="console-title">Measure</h2>
+            <div id="lab-grid"></div>
+            <h3 class="console-subtitle">This frame</h3>
+            <dl class="readout-list" id="photons-readout" aria-live="polite"></dl>
+          </div>
+        </section>
+      </section>
+
+      <section class="section" id="stack" aria-labelledby="stack-title">
+        <header class="section-head">
+          <h2 id="stack-title">Four layers above every pixel</h2>
+          <div class="section-note">
+            <p>
+              A microlens gathers light, a colour filter passes one band of it, a
+              photodiode counts the electrons that land, and a circuit reads the
+              count. Pull the layers apart to see the order.
+            </p>
+          </div>
+        </header>
+
+        <div class="stage" id="stack-stage">
+          <canvas id="stack-canvas"></canvas>
+        </div>
+
+        <div class="stage-foot">
+          <div class="stage-control">
             <label class="control-label" for="stack-separation">
               <span>Layer separation</span>
               <span class="control-value" id="stack-separation-value">fully apart</span>
             </label>
-            <input id="stack-separation" type="range" min="0" max="1" step="0.01"
-                   value="1" aria-valuetext="fully apart" />
+            <input
+              id="stack-separation"
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value="1"
+              aria-valuetext="fully apart"
+            />
           </div>
-
-          <ol class="stack-legend">
-            <li><span class="stack-index">01</span> Microlens — gathers light</li>
-            <li><span class="stack-index">02</span> Colour filter — passes one colour</li>
-            <li><span class="stack-index">03</span> Photodiode — counts electrons</li>
-            <li><span class="stack-index">04</span> Circuitry — reads the count</li>
-          </ol>
           <p class="status-line" id="stack-readout" role="status"></p>
-        </section>
+        </div>
 
-        <section class="section" id="pattern" aria-labelledby="pattern-title">
-          <h2 id="pattern-title">One colour per pixel</h2>
-          <p class="lede">
-            Each site has one filter. Two of every four filters are green. The eye
-            sees green detail best.
-          </p>
+        <ol class="stack-legend">
+          <li><span class="stack-index">01</span><span>Microlens — gathers light</span></li>
+          <li><span class="stack-index">02</span><span>Colour filter — passes one band</span></li>
+          <li><span class="stack-index">03</span><span>Photodiode — counts electrons</span></li>
+          <li><span class="stack-index">04</span><span>Circuit — reads the count</span></li>
+        </ol>
+      </section>
 
-          <div class="pattern">
-            <figure class="pattern-figure">
-              <canvas id="bayer-canvas" width="360" height="360" aria-hidden="true"></canvas>
-              <figcaption id="bayer-caption"></figcaption>
-            </figure>
-            <div class="pattern-copy">
-              <p>
-                This RGGB pattern repeats every two sites. A red site never measures
-                green or blue. The camera must guess those two numbers. The next
-                section shows how.
-              </p>
-              <dl id="pattern-counts" aria-live="polite"></dl>
-            </div>
+      <section class="section" id="pixel" aria-labelledby="pixel-title">
+        <header class="section-head">
+          <h2 id="pixel-title">One colour per pixel</h2>
+          <div class="section-note">
+            <p>
+              The filters repeat every two sites: red, green, green, blue. Half of the
+              tiles are green because the eye resolves green detail better than it
+              resolves red or blue.
+            </p>
           </div>
-        </section>
+        </header>
 
-        <section class="section" id="guess" aria-labelledby="guess-title">
-          <h2 id="guess-title">Make the guess yourself</h2>
-          <p class="lede">
-            A red or blue site has no green reading. Choose a pair of green neighbours.
-            Then see what each algorithm chose.
-          </p>
+        <div class="pattern">
+          <figure class="pattern-figure">
+            <canvas id="bayer-canvas" width="360" height="360" aria-label="The RGGB filter grid"></canvas>
+            <figcaption id="bayer-caption"></figcaption>
+          </figure>
 
-          <div class="guess-demo" id="guess-demo"></div>
-
-          <p class="lede lede-small">
-            Each method builds the green layer first. It then fills red and blue from
-            colour differences. Those differences stay smooth across an edge, even
-            when the colours change sharply.
-          </p>
-
-          <div class="guess">
-            <figure class="guess-figure">
-              <canvas id="error-canvas" width="384" height="216" aria-hidden="true"></canvas>
-              <figcaption class="guess-caption">
-                <span class="guess-swatch" aria-hidden="true"></span>
-                <span id="error-caption">Error map, in 8-bit levels</span>
-              </figcaption>
-              <p class="status-line">
-                Bright areas are errors. Select the zone plate scene to see where
-                each method fails.
-              </p>
-            </figure>
-
-            <div class="method-panel">
-              <table class="method-table">
-                <caption class="visually-hidden">Reconstruction quality per method</caption>
-                <thead>
-                  <tr><th scope="col">Method</th><th scope="col">PSNR</th><th scope="col">Colour error</th></tr>
-                </thead>
-                <tbody id="method-table"></tbody>
-              </table>
-              <p class="status-line" id="method-note"></p>
-              <p class="status-line" id="method-failures">
-                Nearest neighbour copies one pixel, so edges look like a zip. Bilinear
-                uses a smooth average, so diagonal edges smear. Hamilton-Adams picks
-                one direction, so an edge can look like steps. Malvar-He-Cutler
-                smooths the error it cannot see, so fine colour blurs.
-              </p>
-            </div>
+          <div class="pattern-copy">
+            <dl class="pattern-counts" id="pattern-counts" aria-live="polite"></dl>
+            <p>
+              A red site never measures green or blue. Those two numbers are not
+              stored elsewhere in the file and recovered later — they do not exist.
+            </p>
+            <p>
+              So the camera multiplies each empty site by the neighbours it does have.
+              That is a guess, and the next section is about how it is made.
+            </p>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section class="section" id="lab" aria-labelledby="lab-title">
-          <h2 id="lab-title">The arithmetic at one site</h2>
-          <p class="lede">
-            Select a pixel in the first image. This panel shows the numbers the engine used.
-          </p>
-          <div class="explain" id="explain">
-            <div id="explain-body">
-              <p class="status-line">Select a pixel in the first image.</p>
-            </div>
+      <section class="section" id="guess" aria-labelledby="guess-title">
+        <header class="section-head">
+          <h2 id="guess-title">The missing green</h2>
+          <div class="section-note">
+            <p>
+              A red or blue site has no green reading. Its two green neighbours — one
+              along the row, one along the column — are all the evidence there is. Pick
+              one and see which guess lands closer.
+            </p>
           </div>
-        </section>
+        </header>
 
-        <section class="section" id="print" aria-labelledby="print-title">
-          <h2 id="print-title">The print is a choice</h2>
-          <p class="lede">
-            Expose freezes the current frame. Then print it in eight ways. The measured
-            numbers stay the same. The print changes.
-          </p>
+        <div class="guess-demo" id="guess-demo"></div>
 
-          <div class="print-studio">
-            <figure class="print-figure">
-              <div class="print-frame" id="print-frame" data-printed="false">
-                <canvas id="print-canvas" width="384" height="216"
-                        role="img" aria-label="The printed frame"></canvas>
-                <span class="print-tag" id="print-tag" aria-hidden="true">live</span>
+        <p class="body-note">
+          Every method in the table below does this at every site, then repeats it for
+          red and blue. They differ in which neighbours they trust and how much weight
+          each one gets.
+        </p>
+
+        <div class="guess">
+          <figure class="guess-figure">
+            <div class="plate plate-data">
+              <canvas id="error-canvas" width="384" height="216" aria-label="Error map of the current reconstruction"></canvas>
+            </div>
+            <figcaption class="guess-caption">
+              <span class="ramp-swatch" aria-hidden="true"></span>
+              <span id="error-caption">Error map, in 8-bit levels</span>
+            </figcaption>
+            <p class="status-line" id="error-note">
+              Darker areas are larger errors. Choose the zone plate scene to see where
+              the methods disagree most.
+            </p>
+          </figure>
+
+          <div class="method-panel">
+            <table class="method-table">
+              <caption class="visually-hidden">
+                Reconstruction quality per method
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Method</th>
+                  <th scope="col">PSNR</th>
+                  <th scope="col">Colour error</th>
+                </tr>
+              </thead>
+              <tbody id="method-table"></tbody>
+            </table>
+            <p class="status-line" id="method-note"></p>
+
+            <dl class="faults" id="method-failures">
+              <div>
+                <dt>Nearest neighbour</dt>
+                <dd>Copies one site into the next, so edges come out like a zip.</dd>
               </div>
-              <figcaption id="print-status" role="status">Expose a frame to begin.</figcaption>
-            </figure>
-
-            <div class="print-controls">
-              <div class="print-actions">
-                <button type="button" class="shutter" id="print-expose">Expose</button>
-                <button type="button" class="print-retake" id="print-retake" hidden>Retake</button>
+              <div>
+                <dt>Bilinear</dt>
+                <dd>Averages its neighbours, so diagonal edges smear.</dd>
               </div>
-              <p class="control-label">Print treatment</p>
-              <div id="treatment-grid" role="group" aria-label="Print treatment"></div>
-              <p class="status-line" id="treatment-note"></p>
-            </div>
+              <div>
+                <dt>Hamilton–Adams</dt>
+                <dd>Commits to one direction, so an edge can staircase.</dd>
+              </div>
+              <div>
+                <dt>Malvar–He–Cutler</dt>
+                <dd>Smooths the error it cannot see, so fine colour bleeds.</dd>
+              </div>
+            </dl>
           </div>
-        </section>
-      </main>
-    </div>
+        </div>
+      </section>
+
+      <section class="section" id="numbers" aria-labelledby="numbers-title">
+        <header class="section-head">
+          <h2 id="numbers-title">One pixel, in numbers</h2>
+          <div class="section-note">
+            <p>
+              Click any pixel in the frame at the top. This panel prints what the
+              engine had for that site: the channel it measured, the two it invented,
+              and the arithmetic behind each one.
+            </p>
+          </div>
+        </header>
+
+        <dl class="readout-row" id="readouts-grid" aria-live="polite"></dl>
+
+        <div class="explain" id="explain">
+          <div class="explain-head">
+            <h3 class="console-subtitle">At the selected site</h3>
+            <p class="status-line" id="explain-hint">
+              Showing the centre of the frame. Click another pixel to move it.
+            </p>
+          </div>
+          <div id="explain-body">
+            <p class="status-line">Select a pixel in the frame at the top of the page.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="print" aria-labelledby="print-title">
+        <header class="section-head">
+          <h2 id="print-title">Eight ways to print one frame</h2>
+          <div class="section-note">
+            <p>
+              Expose freezes the frame. The measurements do not change; only the print
+              does. Each treatment stands in for a real choice of paper, toner or
+              developer strength.
+            </p>
+          </div>
+        </header>
+
+        <div class="print-studio">
+          <figure class="print-figure">
+            <div class="plate plate-print" id="print-frame" data-printed="false">
+              <canvas
+                id="print-canvas"
+                width="384"
+                height="216"
+                role="img"
+                aria-label="The printed frame"
+              ></canvas>
+              <span class="print-tag" id="print-tag" aria-hidden="true">live</span>
+            </div>
+            <figcaption id="print-status" role="status">Expose a frame to begin.</figcaption>
+          </figure>
+
+          <div class="print-controls">
+            <div class="print-actions">
+              <button type="button" class="btn btn-primary" id="print-expose">Expose</button>
+              <button type="button" class="btn" id="print-retake" hidden>Retake</button>
+            </div>
+            <h3 class="console-subtitle">Print treatment</h3>
+            <div class="treatment-grid" id="treatment-grid" role="group" aria-label="Print treatment"></div>
+            <p class="status-line" id="treatment-note"></p>
+          </div>
+        </div>
+      </section>
+    </main>
 
     <footer class="colophon">
-      <p id="compute-note">Computed in your browser</p>
-      <button class="sound-toggle" id="sound-toggle" aria-pressed="true">Sound on</button>
-      <p>No network requests, no sign-in, no download. The engine runs in a Web Worker on this device.</p>
+      <div class="colophon-bar">
+        <p id="compute-note">Computed in your browser</p>
+        <button class="btn btn-quiet sound-toggle" id="sound-toggle" aria-pressed="true">Sound on</button>
+      </div>
+      <p class="colophon-note">
+        No network requests, no sign-in, no download. The pipeline runs in a Web
+        Worker on this device.
+      </p>
     </footer>
 
     <script type="module" src="/src/main.js"></script>
 
     <div id="loading" role="status" aria-live="polite" aria-busy="true">
-      <p>Computing the first frame…</p>
-    </div>
-
-    <div id="help" class="help-panel" role="dialog" aria-modal="true" aria-label="How to use" hidden>
-      <div class="help-inner">
-        <button id="help-close" class="help-close" aria-label="Close help">✕</button>
-        <h2>How to use this</h2>
-        <ul>
-          <li>Change a control in the left panel. The preview above it updates.</li>
-          <li>Drag the divider to compare sensor data with the photo.</li>
-          <li>Select a pixel to see the numbers used to guess its colour.</li>
-          <li>Scroll to read. The controls stay on screen.</li>
-        </ul>
-      </div>
+      <span class="mark mark-lg" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <p>Computing the first frame</p>
     </div>
   </body>
 </html>

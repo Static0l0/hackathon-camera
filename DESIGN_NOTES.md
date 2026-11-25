@@ -1,24 +1,55 @@
-# Design notes — where this page agrees with the design system, and where it doesn't
+# Design notes — the paint scheme, and every place it leaves the design system
 
-The brief says to use the TypeUI design system and to record every override. This
-file is that record. It is deliberately blunt: an override I cannot justify is a
-mistake I should fix, not a preference I should defend.
+The brief asks for the TypeUI design system (`DESIGN.md`) and a record of every
+override. This file is that record. It is deliberately blunt: an override I cannot
+justify is a mistake to fix, not a preference to defend.
+
+## What changed in the second pass
+
+The first build followed `DESIGN.md` far enough to become a template: near-black
+ground, an amber safelight accent, Instrument Serif display type, letterspaced
+uppercase mono labels, square corners, and a 320px control sidebar. The page read
+as "dark editorial explainer" — a costume the subject did not ask for, and one
+that made every number look like a pull-quote instead of a measurement.
+
+The remake keeps the engine, the three.js views and the section order, and
+replaces the paint scheme:
+
+- **No accent colour at all.** Chrome is ink on warm paper. The only saturated
+  things on the page are the R/G/B data and the photographs themselves.
+- **Paper, not night.** The page is a lab bench: warm grey stock, hairlines
+  instead of boxes, plates instead of cards. Exactly three surfaces are dark and
+  all three are images (the split viewer, the exploded stack, the error map).
+- **One interface face.** Instrument Sans Variable for every word, at 400/500,
+  sentence case, no letterspaced capitals anywhere. JetBrains Mono Variable for
+  figures only, never below 11px.
+- **Controls are instruments, not a dashboard.** They sit in a three-column
+  console directly under the plate they change, each column sized to its job.
+- **Two grounds, one page.** The same bench after dark: the tokens swap, the
+  plates get darker than the page instead of lighter, and the three data colours
+  are lifted so they still work as marks on a dark ground. Dark is the default,
+  because the page is read at night beside the screen it is about; the masthead
+  carries a quiet switch, and the choice survives a reload. Both grounds are
+  measured below.
+
+## Direction
+
+The five lines the remake was built against:
+
+- **Product** — an interactive sensor lab that takes a camera pipeline apart in
+  the browser.
+- **Character** — exact, dry, tactile.
+- **World** — a bench in an optics lab: uncoated paper, graphite text, hairlines,
+  photographs laid on the page as plates.
+- **Moments** — the split specimen plate with its loupe and true-scale ruler; the
+  exploded 24×24 sensor stack on the one dark stage.
+- **Signature** — a paper console of instrument controls under the specimen, mono
+  figures, and a ruler marked in real sensor sites (48 of 384, a true eighth).
 
 ## What the design system actually gave us
 
 `npx typeui.sh pull editorial -f design` wrote `DESIGN.md` at the project root.
-The slug is `editorial`, chosen because its own description is "magazine-inspired
-editorial layout with refined serif typography, structured grids, elegant reading
-experiences" — the nearest thing in the registry to a lab contact sheet.
-
-**The skill file the brief expected was never written.** `-f design` produces
-`DESIGN.md` only; `-f skill` (the default) is what writes a provider skill, and it
-requires an explicit `-p <provider>`. There is no `.agents/skills/design-system/`
-directory in this repository, and nothing was synthesised to stand in for one —
-inventing a skill file and calling it "the design system" would have been a lie
-about where the rules came from. What was followed, in full, is `DESIGN.md`.
-
-Its tokens, as shipped:
+The slug is `editorial`. Its tokens, as shipped:
 
 | token | value |
 | --- | --- |
@@ -34,68 +65,86 @@ Its tokens, as shipped:
 | radius | sm 4px, md 8px |
 | spacing | sm 8px, md 16px, "8pt baseline grid" |
 
+The skill file the brief expected was never written: `-f design` produces
+`DESIGN.md` only, and `-f skill` needs an explicit provider. Nothing was
+synthesised to stand in for one.
+
 ## The rule I applied
 
-Where the design system and the art direction disagree on **palette or
-typography, the art direction wins** — it is the thing the page is judged on, and
-a darkroom cannot be rendered on `#FFFFFF`. Everything else in the system (the
-measure, the label treatment, the spacing rhythm, the refusal to decorate) was
-kept where it did not fight the brief.
+Structure and discipline come from the system; **palette, typefaces and radii are
+set by the direction above.** The measure, the hairline language, the refusal to
+decorate and the one-number-format habit are kept. The colours are not, because
+the page is not white and a printed plate is not a product page.
 
 ## Every override, with the reason
 
 | # | design system says | this page does | why |
 | --- | --- | --- | --- |
-| 1 | surface `#FFFFFF` | ground `#0C0C0B` | The subject is a darkroom contact sheet and a sensor in the dark. A white page cannot show a mosaic glowing faintly; it also destroys the one accent, because amber only reads as a safelight against near-black. |
-| 2 | text `#111827` | `#E8E3D6` | Consequence of 1. Warm off-white rather than pure white, so the screen is not a light source in a dark room. |
-| 3 | primary `#111111` | accent `#F5B301` (the only accent) | `#111111` is invisible on `#0C0C0B`. Amber is the safelight, and it is used for exactly three things: focus, active state, and the cursor. |
-| 4 | h1 Gelasio 2.5rem | Instrument Serif, `clamp(2.75rem, 7.5vw, 5.75rem)` | Gelasio is a Georgia metric-compatible web serif; Instrument Serif is a display face with the high-contrast, slightly condensed feel of a printed plate caption. The headline is the hook, and it has to hold a phone in one line-per-thought. |
-| 5 | body Gelasio | Hanken Grotesk Variable | Body text is read, not admired. A serif at 16px on near-black is harder to read than a neutral sans, and the serif is already doing the display work. |
-| 6 | label Ubuntu Mono | JetBrains Mono Variable | Readouts are tabular numbers at 11–13px. JetBrains Mono's tabular figures and unambiguous `0/O` and `1/l` matter more here than Ubuntu Mono's character, because the numbers are the subject. Both are mono, so the label role is preserved. |
-| 7 | radius 4px / 8px | `0` | Rounded corners read as "card" and this page has no cards: it has a sheet, rules and measurement. Nothing on the page is a container. |
-| 8 | spacing 8pt grid (8/16px) | rem rhythm on a 0.25rem base, `clamp()` between breakpoints | The 8pt grid is honoured in spirit — every gap is a multiple of 4px — but a fixed 8pt grid cannot survive `clamp()` type. Section rhythm is 2.75–5rem, which is 44–80px, all multiples of 4. |
-| 9 | components: buttons, cards | none | There is no button on the page. Every control is a native `input`/`select`; every region is delimited by a hairline. |
-| 10 | (no rule on gradients) | one gradient, the error-map scale | The brief bans gradients on backgrounds, text and buttons. The single exception is `.guess-swatch`, which is a legend for the error ramp: it is a picture of the data, not decoration. |
-| 11 | (no rule on shadows) | none | Depth is a banned effect here. Layers are separated by position, not by blur. |
+| 1 | surface `#FFFFFF` | paper `#F2EFE6`, card `#F8F6EF`, sunk `#E7E3D6` | The subject is a photographed object on a bench. Warm stock separates the dark plates from the page without a shadow, and three steps of one neutral are enough to show what is raised. |
+| 2 | text `#111827` | ink `#191814`, secondary `#55514A`, muted `#6F6A5E` | One warm ramp for surfaces and text, so nothing looks tinted against the paper. Three text roles only, all measured below. |
+| 3 | primary `#111111` | no accent token | An accent would have to compete with the R/G/B data, which is the only colour that means anything here. Emphasis is carried by ink fills, weight and hairline weight instead. |
+| 4 | h1 Gelasio 2.5rem | Instrument Sans, `clamp(38px, 4.4vw, 62px)` | The headline states a fact, not a mood. A display serif made it read as an essay; the same words in a neutral grotesk read as a caption for the plate under them. |
+| 5 | body Gelasio | Instrument Sans Variable | Body text is read, not admired, and a second family would only be a costume. |
+| 6 | label Ubuntu Mono | JetBrains Mono Variable | Every label sits next to a number and has to hold a column with it. Tabular figures and unambiguous `0/O` matter more here than character. |
+| 7 | radius 4px / 8px | 3px plates, 6px controls, 8px panels | Nested radii: the plate is the outermost object, a control inside it is smaller, a panel holding controls larger. Square corners read as "sheet" but made every control look like a different species of box. |
+| 8 | spacing 8pt grid (8/16px) | 4px grid, 88px between sections | Every gap is a multiple of 4px, and section rhythm is set by the content (a plate is 600px tall, so a section starts after a hairline and a 40px gap, not after a fixed 96px). |
+| 9 | components: buttons, cards | buttons, selects, faders, plates | The page now has real controls (Expose, Retake, treatments, a layer-separation fader) because the interactions are the argument. They share one control radius and one border weight. |
+| 10 | (no rule on gradients) | two gradients, both data | The error-map swatch and the print plate's own pixels. A gradient that is a picture of the data is not decoration. |
+| 11 | (no rule on shadows) | one shadow, on plates only | `.plate` gets a 1px inset of warm black so a dark photograph sits on paper instead of floating. No blur beyond that, no glow, no coloured shadow. |
 
 ## What was kept from the system
 
-- **Label-caps.** Small mono, uppercase, letterspaced — used for every section
-  figure (`FIG. 04`), control label and readout caption.
-- **One accent for state.** The system's single primary is the single amber here.
-- **Restraint.** No decorative elements, no icon circles, no drop shadows.
-- **A structured measure.** The 12-column grid in `DESIGN.md` became the
-  `.section` grid: a 2-column margin for figure numbers and a 10-column body.
+- **A quiet, single-column measure.** One 1160px column, 40px gutters, no
+  sidebar.
+- **Hairlines instead of boxes.** Region boundaries are 1px rules at 13% and 26%
+  of ink; nothing is a card with a full border and a shadow.
+- **Restraint.** No icons, no badges, no pills, no decorative illustration. The
+  only ornament is the RGGB wordmark, which is the subject.
+- **Sentence case, short labels, no exclamation marks.** Same discipline as
+  `DESIGN.md`, applied to display type as well as body.
 
 ## Accessibility gates, measured rather than assumed
 
-Contrast is computed with the WCAG relative-luminance formula
-(`scripts/contrast.mjs`), not eyeballed:
+`node scripts/contrast.mjs` computes every pair with the WCAG relative-luminance
+formula, for both grounds. The current output:
 
-| pair | ratio | verdict |
+| pair | light | dark |
 | --- | --- | --- |
-| text `#E8E3D6` on ground `#0C0C0B` | 15.27:1 | AAA |
-| dim `#8C8A80` on ground | 5.65:1 | AA (normal text) |
-| accent `#F5B301` on ground | 10.56:1 | AAA |
-| green `#4C9A52` on ground | 5.64:1 | AA |
-| red `#D6452F` on ground | 4.43:1 | **below AA for normal text** |
-| blue `#3566C9` on ground | 3.63:1 | passes only as a non-text graphic (3:1) |
+| ink on paper | 15.45:1 AAA | 15.60:1 AAA |
+| ink on card | 16.43:1 AAA | 14.48:1 AAA |
+| secondary `#55514A` / `#B7B1A3` on paper | 6.86:1 AA text | 8.76:1 AAA |
+| muted on paper | 4.68:1 AA text | 5.74:1 AA text |
+| muted on sunk | 4.19:1 graphic only | 5.96:1 AA text |
+| paper on night | 15.87:1 AAA | 1.06:1 — not a text pair on the dark ground |
+| data red on paper | 4.23:1 graphic only | 6.01:1 AA text |
+| data green on paper | 3.61:1 graphic only | 8.28:1 AAA |
+| data blue on paper | 5.40:1 AA text | 7.85:1 AAA |
 
-The three data colours are fixed by the brief, so the response is not to change
-them but to stop using them for text. They appear as **swatches, tiles and
-bars** — graphics, where the 3:1 UI threshold applies and all three pass — while
-every word stays in `--text` or `--text-dim`. That is also the better design:
-colour means a filter, and a label is not a filter.
+The three data colours are fixed by the brief, so they are used where a graphic
+threshold of 3:1 applies: tiles, swatches, channel marks, ranked bars. No word in
+this page is set in a data colour — colour means a filter, and a label is not a
+filter.
 
-Known exception: the single letters `R`/`G`/`B` drawn inside the Bayer tiles in
-`src/view/bayerDiagram.js` are ink on a coloured tile, which is 5.9:1 on green
-and 3.6:1 on blue. The letters are repeated by the caption and by the three
-percentages below the diagram, so no information is carried by that contrast
-alone.
+**Known exceptions, both deliberate:**
+
+- The single letters `R`/`G`/`B` inside the Bayer tiles are white with a dark
+  halo rather than a flat text role, because the three fills are mid-dark on both
+  grounds: ink on a tile reaches only 2.86:1 on the light theme's blue and 1.88:1
+  on the dark theme's green, while a haloed white letter clears 4.2:1 on all six
+  combinations. The letters are also repeated by the caption (`RGGB over 6×6
+  sites`) and by the three percentages under the diagram, so no information
+  depends on that contrast.
+- Muted `#6F6A5E` is used for 11.5px mono captions and never for body text, and
+  never on `--sunk`, where it drops to 4.19:1 on the light ground.
+
+**One thing the theme switch forces:** the error map is a density print, so "more
+error" is more ink on paper and more light on the dark ground. The ramp, the
+legend swatch and the sentence under it all switch together — a claim about the
+picture cannot live only in the stylesheet.
 
 ## What this file does not claim
 
-It does not claim the page follows the design system. It follows the art
-direction, keeps the system's structure and label language, and overrides its
-palette, its typefaces and its radii — eleven times, listed above, each with a
-reason that can be argued with.
+It does not claim the page follows `DESIGN.md`. It follows the direction above,
+keeps the system's structure and its restraint, and overrides its palette, its
+typefaces and its radii — eleven times, listed above, each with a reason that can
+be argued with.

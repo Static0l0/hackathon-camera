@@ -342,32 +342,94 @@ export function createSensorStack({ canvas, readout }) {
   }
 
   /**
-   * Point the camera at wherever the stack currently is, and stand back far
-   * enough that the open stack still fits. Without this the photon layer leaves
-   * the top of the frame as soon as the layers separate.
+   * Point the camera so the whole open stack fills the plate without spilling
+   * past its edges, at any canvas shape.
+   *
+   * The extent is built from the layer coordinates, not by walking the scene
+   * graph: an instanced sheet reports the bounds of one tile rather than of the
+   * 24 × 24 array it is drawn across, so a graph walk would frame a speck.
    */
   function frameCamera() {
     const open = spread * EXPLODE_STEP * (LAYER_ORDER.length - 1);
-    const centreY = (LAYER_Y.circuitry + LAYER_Y.photons) / 2 + open / 2;
+    const half = size / 2;
 
-    // Further back as the stack grows taller, so the apparent size stays steady.
-    const base = size * (1.05 + open * 0.062);
+    const box = new THREE.Box3(
+      new THREE.Vector3(-half, LAYER_Y.circuitry - 0.6, -half),
+      new THREE.Vector3(half, LAYER_Y.photons + open + 1.0, half),
+    );
+    const target = box.getCenter(new THREE.Vector3());
 
-    // The vertical field of view is fixed, so the width a frame can see is
-    // proportional to its aspect ratio. A narrow or squarish canvas therefore
-    // crops the ends off a 24-wide array (it did, on a phone). Step back until
-    // the whole patch is inside: 1 / (2 * tan(fov/2)) is the distance at which
-    // one unit of width fills one unit of height, plus a little margin.
-    const widthFit = (size * 1.8) / Math.max(camera.aspect, 0.3);
-    const distance = Math.max(base, widthFit);
+    const corners = [];
+    for (const x of [box.min.x, box.max.x]) {
+      for (const y of [box.min.y, box.max.y]) {
+        for (const z of [box.min.z, box.max.z]) {
+          corners.push(new THREE.Vector3(x, y, z));
+        }
+      }
+    }
 
     // The camera drops as the layers part: looked at from high above, the gaps
     // between the layers project on top of each other and the exploded stack
     // reads as one pile. From a lower angle the gaps open up across the screen.
     const elevation = 0.74 - 0.36 * spread;
+    // Corner-on rather than face-on: a 24 × 24 sheet seen square projects as a
+    // narrow band across a wide plate, while a diamond fills it.
+    const direction = new THREE.Vector3(0.8, elevation, 0.8).normalize();
 
-    camera.position.set(distance * 0.42, centreY + distance * elevation, distance * 0.92);
-    camera.lookAt(0, centreY, 0);
+    const ndc = new THREE.Vector3();
+    const place = (distance) => {
+      camera.position.copy(target).addScaledVector(direction, distance);
+      camera.lookAt(target);
+      camera.updateMatrixWorld(true);
+    };
+
+    // How far outside the frame the worst corner sits (1 means just inside).
+    const overflow = (distance) => {
+      place(distance);
+      let worst = 0;
+      for (const corner of corners) {
+        ndc.copy(corner).project(camera);
+        worst = Math.max(worst, Math.abs(ndc.x) / 0.95, Math.abs(ndc.y) / 0.9);
+      }
+      return worst;
+    };
+
+    // Projection size is close to inversely proportional to distance, so
+    // multiplying by the overflow converges in two or three passes.
+    let distance = size * 2;
+    for (let pass = 0; pass < 4; pass += 1) {
+      distance *= Math.min(1.8, Math.max(0.6, overflow(distance)));
+    }
+
+    // Centre what is on screen rather than what is in the box: with the camera
+    // off to one side the near corner of the array is magnified and the whole
+    // composition drifts up and right. Pan the aim by the projected offset, then
+    // fit once more so the pan cannot push a corner out again.
+    place(distance);
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const corner of corners) {
+      ndc.copy(corner).project(camera);
+      minX = Math.min(minX, ndc.x);
+      maxX = Math.max(maxX, ndc.x);
+      minY = Math.min(minY, ndc.y);
+      maxY = Math.max(maxY, ndc.y);
+    }
+
+    const halfHeight = distance * Math.tan((camera.fov * Math.PI) / 360);
+    const halfWidth = halfHeight * camera.aspect;
+    const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
+    const up = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
+    target.addScaledVector(right, ((minX + maxX) / 2) * halfWidth);
+    target.addScaledVector(up, ((minY + maxY) / 2) * halfHeight);
+
+    for (let pass = 0; pass < 3; pass += 1) {
+      distance *= Math.min(1.8, Math.max(0.6, overflow(distance)));
+    }
+
+    place(distance);
     camera.updateProjectionMatrix();
   }
 
