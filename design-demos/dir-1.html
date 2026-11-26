@@ -75,6 +75,46 @@
         z-index: 5;
       }
 
+      .rail-body {
+        display: flex;
+        flex-direction: column;
+        gap: 13px;
+      }
+
+      /* The handle only exists once the rail turns into a bottom sheet. */
+      .rail-handle {
+        display: none;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .handle-bar {
+        display: block;
+        width: 34px;
+        height: 3px;
+        margin: 0 auto 10px;
+        border-radius: 2px;
+        background: var(--dim);
+      }
+
+      .handle-text {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 12px;
+        color: var(--dim);
+      }
+
+      .handle-sum {
+        color: var(--mute);
+      }
+
       .brand {
         display: flex;
         align-items: center;
@@ -601,15 +641,33 @@
         .head p { grid-column: 2; }
         .body { padding-left: 0; }
         .filters, .guess, .print, .cover { grid-template-columns: minmax(0, 1fr); }
-        /* On a phone the rail would eat the first screen; the controls come back
-           as the strip at the bottom of the real build. */
-        .rail { display: none; }
-        .rail .brand { flex: 0 0 100%; padding-bottom: 4px; }
-        .rail .group { flex: 0 0 auto; min-width: 168px; }
-        .rail .ctl { min-width: 150px; }
-        .rail .group:nth-of-type(3) { display: none; }
-        .rail .group:nth-of-type(1) .ctl:nth-child(4),
-        .rail .group:nth-of-type(1) .ctl:nth-child(5) { display: none; }
+
+        /* The rail cannot sit beside the text on a phone, so it lies down along the
+           bottom edge as a sheet: collapsed to its handle, opened with one tap. */
+        .rail {
+          position: fixed;
+          inset: auto 0 0 0;
+          width: auto;
+          max-height: 74vh;
+          border-right: 0;
+          border-top: 1px solid var(--rule);
+          padding: 10px 18px 16px;
+          gap: 0;
+          z-index: 40;
+          box-shadow: 0 -14px 34px -26px rgba(0, 0, 0, 0.95);
+          overflow: hidden;
+          transform: translateY(calc(100% - 64px));
+          transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .rail[data-open="true"] {
+          transform: translateY(0);
+          overflow-y: auto;
+        }
+        .rail .brand { display: none; }
+        .rail-handle { display: block; padding: 4px 0 14px; }
+        .rail .group { margin-bottom: 12px; }
+        .rail .live { margin-top: 4px; }
+        .shell { padding-bottom: 84px; }
         .readrow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .readrow div:nth-child(2) { border-right: 0; }
         .chans { grid-template-columns: minmax(0, 1fr); }
@@ -624,6 +682,15 @@
         <span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
         The Mosaic
       </div>
+
+      <!-- On a phone the rail becomes a sheet that rests at the bottom edge, so
+           the controls are one tap away instead of gone. -->
+      <button class="rail-handle" type="button" aria-expanded="false" aria-controls="rail-body">
+        <span class="handle-bar" aria-hidden="true"></span>
+        <span class="handle-text">Controls <span class="handle-sum">40% light · Photograph · Hamilton–Adams</span></span>
+      </button>
+
+      <div class="rail-body" id="rail-body">
 
       <div class="group">
         <h2>Light</h2>
@@ -685,6 +752,7 @@
         <div><span class="k">Signal per site</span><span>1112 e⁻</span></div>
         <div><span class="k">Blown out</span><span>0.0 %</span></div>
       </div>
+      </div><!-- /rail-body -->
     </aside>
 
     <main class="page">
@@ -949,5 +1017,42 @@
         <span>Nothing leaves this device.</span>
       </footer>
     </main>
+
+    <script>
+      // The sheet handle: opens and closes the control panel on a phone, and keeps
+      // its one-line summary honest while the controls move.
+      const rail = document.querySelector('.rail');
+      const handle = document.querySelector('.rail-handle');
+      const summary = document.querySelector('.handle-sum');
+      const lightOut = document.querySelector('.group output');
+      const scene = document.querySelector('select[aria-label="Scene"]');
+      const demosaic = document.querySelector('select[aria-label="Demosaic"]');
+
+      handle.addEventListener('click', () => {
+        const open = rail.dataset.open === 'true';
+        rail.dataset.open = String(!open);
+        handle.setAttribute('aria-expanded', String(!open));
+      });
+
+      function sync() {
+        summary.textContent = [
+          `${lightOut.textContent.trim()} light`,
+          scene ? scene.value : '',
+          demosaic ? demosaic.value : '',
+        ].filter(Boolean).join(' · ');
+      }
+
+      rail.addEventListener('input', sync);
+      rail.addEventListener('change', sync);
+
+      // Light level is the one slider the summary quotes, so it has to move.
+      const light = rail.querySelector('.group input[type="range"]');
+      light.addEventListener('input', () => {
+        lightOut.textContent = `${light.value}%`;
+        sync();
+      });
+
+      sync();
+    </script>
   </body>
 </html>
