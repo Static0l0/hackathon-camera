@@ -55,11 +55,14 @@ page references them**:
 | `public/favicon.svg` | A purple gradient logo mark, 48×46 | **UNVERIFIED** |
 | `public/icons.svg` | A symbol sheet containing Bluesky, Discord and other social icons | **UNVERIFIED** |
 
-Both were committed in the project's first commit and look like leftovers from a page
-template rather than anything drawn for this project. They are not used — the page uses
-an inline RGGB data-URI favicon in `index.html` — so they can be deleted without touching
-the product. If they are kept, their origin needs to be established before the project is
-described as wholly original.
+Both were committed in the project's first commit (`177addd`), in the same change that
+added the generated `DESIGN.md` — three files, 80 lines, nothing else. That makes them
+almost certainly output of the same TypeUI scaffold rather than anything drawn for this
+project, but the CLI's asset templates were not inspected, so the licence cannot be
+confirmed and they are marked UNVERIFIED. They are not used — the page uses an inline RGGB
+data-URI favicon in `index.html` — so they can be deleted without touching the product.
+If they are kept, their origin needs to be established before the project is described as
+wholly original.
 
 ## Algorithm references (no code taken)
 
