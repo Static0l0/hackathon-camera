@@ -1,4 +1,4 @@
-# The Mosaic — what a camera really records
+﻿# The Mosaic — what a camera really records
 
 **Live:** <https://static0l0.github.io/hackathon-camera/>
 **Repo:** <https://github.com/Static0l0/hackathon-camera>
@@ -9,12 +9,11 @@ An interactive explainer that runs a camera sensor in the browser. Drag a divide
 the numbers the sensor recorded and the photograph those numbers became. Click a pixel to
 see what it measured, what was invented, and the arithmetic behind both. Move the light,
 shutter, ISO, aperture or scene and pick one of four real demosaicing algorithms. Nothing
-is pre-rendered: every slider recomputes photons, electrons, the RGGB mosaic and the
-reconstruction in a Web Worker.
+is pre-rendered: every slider recomputes the whole pipeline in a Web Worker.
 
 ## How it answers "Unveiling Technology"
 
-The theme asks for a technology opened up. This takes the most familiar imaging device
+The theme asks for technology opened up. This takes the most familiar imaging device
 people own and shows the invisible step: each site on a sensor sits under one colour
 filter, so it counts one colour, and two of the three numbers in every pixel were never
 measured — software guesses them. The page computes that and prints the receipt beside
@@ -41,12 +40,13 @@ screenshot scripts, and the copy. Used: three.js 0.187.0 (MIT) for the stack,
 GSAP 3.15.1 (free "no charge" licence, not OSI) for reveals, Instrument Sans and JetBrains
 Mono under the SIL OFL 1.1, Vite and Vitest as tooling, and TypeUI's generated `DESIGN.md`
 as a token starting point — tokens only, eleven documented overrides, no TypeUI code
-shipped. The history also contains a two-commit pull request from another account, merged
-as PR #1. `THIRD_PARTY.md` lists each component with its licence and how it was verified.
+shipped. Commits are signed `starman-max <lineageos357@gmail.com>`, an alternate address
+on the same GitHub account (Static0l0); the history also holds one contributor PR (#1).
+`THIRD_PARTY.md` lists each component with its licence and how it was verified.
 
 ## How I verified it
 
-`npm test` runs 80 Vitest tests over the engine only. They assert properties that would
+`npm test` runs 80 Vitest tests over the engine. They assert properties that would
 catch errors: every demosaicing kernel sums to 8 and matches its transpose, flat fields
 reproduce exactly, bilinear is exact on a linear ramp, doubling the ISO doubles both
 signal and noise while their ratio holds, and the Poisson draw's mean and variance match λ
@@ -63,4 +63,4 @@ one axis *raises* the score from 29.78 to 31.63 dB while producing visible bandi
 photon cloud is sampled above a threshold and prints its exchange rate. ISO is gain only —
 no noise reduction, sharpening or JPEG. No rolling shutter, no X-Trans. The explanation is
 partly prose: there is no frame-by-frame stepper. R/G/B data colours fill shapes, never
-text: they do not all clear WCAG AA.
+text; they do not all clear WCAG AA.

@@ -288,3 +288,14 @@ Third-party components keep their own licences: three.js (MIT), GSAP (Standard "
 charge" licence — free to use, not OSI), the fonts (SIL OFL 1.1), and the build tools
 (MIT / Apache-2.0). Each one, with its version and where the licence was verified, is
 listed in [`THIRD_PARTY.md`](THIRD_PARTY.md).
+
+---
+
+## Who wrote it
+
+The repository is owned and written by the GitHub account **Static0l0**. Commits are
+signed `starman-max <lineageos357@gmail.com>`: that address is an alternate email on the
+same account, so the author line and the owner are the same person.
+
+The history also contains one contributor pull request — **#1**, from `parker501` — which
+added the sound effects and the help button. Those commits keep their original author.
