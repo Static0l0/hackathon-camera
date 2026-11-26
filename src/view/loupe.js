@@ -120,7 +120,7 @@ export function createLoupe({ root, canvas, caption }) {
     // Short enough to sit in three lines under a 154px grid. The full sentence
     // ("the other two colours have no reading here") is already in the status
     // line, where there is room to say it.
-    caption.textContent = `row ${y} · col ${x}\n${channelName} only, ${dn[y * width + x]} DN`;
+    caption.textContent = `row ${y} · col ${x}\n${channelName} only · ${dn[y * width + x]} of 4095`;
 
     place(pointer);
   }

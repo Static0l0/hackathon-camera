@@ -269,7 +269,7 @@ function describeErrorScale(theme) {
   if (!elements.errorNote) return;
   const pole = theme === 'dark' ? 'Brighter' : 'Darker';
   elements.errorNote.textContent =
-    `${pole} areas are larger errors. Choose the zone plate scene to see where the methods disagree most.`;
+    `${pole} areas are larger errors. Pick the zone plate scene to see where the methods disagree most.`;
 }
 
 const methodTable = createMethodTable({
@@ -459,7 +459,7 @@ async function loadStack() {
     }
   } catch (error) {
     elements.stackStage.classList.add('is-unavailable');
-    elements.stackReadout.textContent = `this view needs WebGL (${error.message})`;
+    elements.stackReadout.textContent = `This view needs WebGL (${error.message}).`;
     console.warn('sensor stack unavailable:', error.message);
   }
 }

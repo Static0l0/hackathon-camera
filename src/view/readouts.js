@@ -27,8 +27,8 @@ function decibels(value) {
 const READOUTS = [
   {
     id: 'snr',
-    label: 'SNR at mid-grey',
-    detail: 'signal to noise for a mid-grey patch',
+    label: 'Signal to noise',
+    detail: 'how far the signal sits above the noise, measured on a mid-grey patch',
     value: (frame) => ({
       text: decibels(frame.metrics.midGreySnrDb),
       unit: 'dB',
@@ -36,8 +36,8 @@ const READOUTS = [
   },
   {
     id: 'electrons',
-    label: 'Mean signal',
-    detail: 'electrons per pixel',
+    label: 'Signal per site',
+    detail: 'electrons counted per site, on average',
     value: (frame) => ({
       text: Math.round(frame.metrics.meanElectrons).toString(),
       unit: 'e⁻',
@@ -45,8 +45,8 @@ const READOUTS = [
   },
   {
     id: 'clipped',
-    label: 'Clipped',
-    detail: 'pixels at the top of the range',
+    label: 'Blown out',
+    detail: 'sites that hit the top of the range, where detail is lost',
     value: (frame) => ({
       text: (frame.metrics.clippedFraction * 100).toFixed(1),
       unit: '%',
@@ -55,7 +55,7 @@ const READOUTS = [
   {
     id: 'psnr',
     label: 'PSNR',
-    detail: 'reconstruction quality against the ideal sensor',
+    detail: 'how close the guess is to the real picture; higher is better',
     value: (frame) =>
       frame.metrics.psnr === null
         ? { text: null }
@@ -64,7 +64,7 @@ const READOUTS = [
   {
     id: 'chroma',
     label: 'Colour error',
-    detail: 'mean shift in the colour differences',
+    detail: 'average shift in colour, in levels',
     value: (frame) =>
       frame.metrics.chromaError === null
         ? { text: null }
@@ -72,8 +72,8 @@ const READOUTS = [
   },
   {
     id: 'split',
-    label: 'Filters',
-    detail: 'red, green, blue sites',
+    label: 'Filter split',
+    detail: 'share of red, green and blue sites',
     value: (frame) => ({
       text: `${Math.round(frame.coverage.red * 100)}% · ${Math.round(
         frame.coverage.green * 100,
@@ -82,8 +82,8 @@ const READOUTS = [
   },
   {
     id: 'frame',
-    label: 'Frame time',
-    detail: 'time to compute this frame',
+    label: 'Compute time',
+    detail: 'time to build this frame',
     value: (frame) => ({ text: Math.round(frame.ms).toString(), unit: 'ms' }),
   },
 ];

@@ -110,7 +110,7 @@ export function explainNearestPixel(mosaic, mask, width, height, x, y) {
       source: { x: sx, y: sy },
       offset: { dx: pick.dx, dy: pick.dy },
       value: mosaic[sy * width + sx],
-      formula: pick.own ? 'Measured at this site.' : `Copied from site (${sx}, ${sy}).`,
+      formula: pick.own ? 'Measured at this site.' : `Copied from the site at (${sx}, ${sy}).`,
     });
   }
   return { method: 'nearest', channels };

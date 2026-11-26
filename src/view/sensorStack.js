@@ -312,7 +312,7 @@ export function createSensorStack({ canvas, readout }) {
     const perDot = stride > 1 ? `1 dot = ${stride} electrons` : '1 dot = 1 electron';
     readout.textContent =
       `rows ${next.y}–${next.y + next.size - 1} · cols ${next.x}–${next.x + next.size - 1}` +
-      ` · ${Math.round(total).toLocaleString('en-US')} electrons collected in this patch` +
+      ` · ${Math.round(total).toLocaleString('en-US')} electrons in this patch` +
       ` · ${drawn.toLocaleString('en-US')} dots, ${perDot}`;
   }
 

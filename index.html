@@ -47,8 +47,14 @@
         </nav>
 
         <dl class="masthead-live" id="top-stats" aria-live="polite">
-          <div><dt>PSNR</dt><dd id="top-psnr">—</dd></div>
-          <div><dt>SNR</dt><dd id="top-snr">—</dd></div>
+          <div>
+            <dt>PSNR <span class="masthead-gloss">guess score</span></dt>
+            <dd id="top-psnr">—</dd>
+          </div>
+          <div>
+            <dt>SNR <span class="masthead-gloss">signal score</span></dt>
+            <dd id="top-snr">—</dd>
+          </div>
         </dl>
 
         <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="true">
@@ -60,15 +66,20 @@
     <main id="main">
       <section class="cover" id="sensor" aria-labelledby="cover-title">
         <div class="cover-head">
-          <h1 id="cover-title" data-reveal>A camera records one colour per pixel</h1>
+          <h1 id="cover-title" data-reveal>A camera only measures one colour per pixel</h1>
           <div class="cover-note">
             <p>
-              Each site behind the lens counts photons through one red, green or blue
-              filter, so two of the three numbers in every pixel were never measured.
-              Software writes them.
+              A sensor is a grid of tiny spots called sites. Each site sits under one
+              colour filter, so it counts one colour only.
             </p>
-            <p class="mono-note">
-              Everything below is computed in your browser as you change the light.
+            <p>
+              A pixel is the dot in the finished photo. Two of its three colour numbers
+              were never measured — software guesses them.
+            </p>
+            <p>
+              The two scores at the top are in decibels, and higher is better. PSNR says
+              how close the guess is to the real picture. SNR says how far the signal
+              sits above the noise.
             </p>
           </div>
         </div>
@@ -92,7 +103,7 @@
                 <span class="divider-grip" aria-hidden="true"></span>
               </div>
               <span class="viewer-tag viewer-tag-left">sensor</span>
-              <span class="viewer-tag viewer-tag-right">developed</span>
+              <span class="viewer-tag viewer-tag-right">photo</span>
               <span class="scale" aria-hidden="true">
                 <span class="scale-label">48 sites</span>
                 <span class="scale-bar"></span>
@@ -107,31 +118,30 @@
 
           <figcaption class="plate-caption">
             <p>
-              Left of the divider: the numbers the sensor recorded. Right of it: the
-              photograph those numbers became.
+              Left: the numbers the sensor recorded. Right: the photo the camera built
+              from them.
             </p>
-            <span class="plate-meta">384 × 216 sites · 12 bit</span>
+            <span class="plate-meta">384 × 216 sites · 12 bit each, so 0 to 4095</span>
           </figcaption>
         </figure>
 
         <p class="status-line" id="viewer-status" role="status">
-          Drag the divider, or focus it and use the arrow keys. Click a pixel for its
-          numbers.
+          Drag the divider, or use the arrow keys. Click a pixel to see its numbers.
         </p>
 
         <section class="console" aria-label="Controls for the frame above">
           <div class="console-col">
-            <h2 class="console-title">Capture</h2>
+            <h2 class="console-title">Light</h2>
             <div class="field-grid" id="capture-grid"></div>
           </div>
 
           <div class="console-col">
-            <h2 class="console-title">Reconstruction</h2>
+            <h2 class="console-title">The guess</h2>
             <div id="reconstruct-grid"></div>
           </div>
 
           <div class="console-col">
-            <h2 class="console-title">Measure</h2>
+            <h2 class="console-title">Numbers</h2>
             <div id="lab-grid"></div>
             <h3 class="console-subtitle">This frame</h3>
             <dl class="readout-list" id="photons-readout" aria-live="polite"></dl>
@@ -144,10 +154,11 @@
           <h2 id="stack-title">Four layers above every pixel</h2>
           <div class="section-note">
             <p>
-              A microlens gathers light, a colour filter passes one band of it, a
-              photodiode counts the electrons that land, and a circuit reads the
-              count. Pull the layers apart to see the order.
+              Start with one site. Light passes a microlens, which gathers it. Then a
+              colour filter, which keeps one colour. Then a photodiode, which counts the
+              electrons that land. Then a circuit, which reads the count.
             </p>
+            <p>Pull the layers apart to see that order.</p>
           </div>
         </header>
 
@@ -176,7 +187,7 @@
 
         <ol class="stack-legend">
           <li><span class="stack-index">01</span><span>Microlens — gathers light</span></li>
-          <li><span class="stack-index">02</span><span>Colour filter — passes one band</span></li>
+          <li><span class="stack-index">02</span><span>Colour filter — keeps one colour</span></li>
           <li><span class="stack-index">03</span><span>Photodiode — counts electrons</span></li>
           <li><span class="stack-index">04</span><span>Circuit — reads the count</span></li>
         </ol>
@@ -192,9 +203,9 @@
           <h2 id="pixel-title">One colour per pixel</h2>
           <div class="section-note">
             <p>
-              The filters repeat every two sites: red, green, green, blue. Half of the
-              tiles are green because the eye resolves green detail better than it
-              resolves red or blue.
+              Each site has one filter, so it records one colour. The filters repeat
+              every two sites: red, green, green, blue. Half of them are green, because
+              your eye reads green detail best.
             </p>
           </div>
         </header>
@@ -208,12 +219,12 @@
           <div class="pattern-copy">
             <dl class="pattern-counts" id="pattern-counts" aria-live="polite"></dl>
             <p>
-              A red site never measures green or blue. Those two numbers are not
-              stored elsewhere in the file and recovered later — they do not exist.
+              A red site never records green or blue. Those two numbers aren't stored
+              somewhere else in the file — they were never there.
             </p>
             <p>
-              So the camera multiplies each empty site by the neighbours it does have.
-              That is a guess, and the next section is about how it is made.
+              So the camera fills each missing colour from the neighbours it does have.
+              That's a guess. The next section is about how the guess is made.
             </p>
           </div>
         </div>
@@ -225,8 +236,8 @@
           <div class="section-note">
             <p>
               A red or blue site has no green reading. Its two green neighbours — one
-              along the row, one along the column — are all the evidence there is. Pick
-              one and see which guess lands closer.
+              along the row, one down the column — are all the evidence there is. Pick
+              one and see which answer lands closer.
             </p>
           </div>
         </header>
@@ -234,9 +245,9 @@
         <div class="guess-demo" id="guess-demo"></div>
 
         <p class="body-note">
-          Every method in the table below does this at every site, then repeats it for
-          red and blue. They differ in which neighbours they trust and how much weight
-          each one gets.
+          Every method below does this at every site, then repeats it for red and blue.
+          They all do the same job — demosaicing, which just means filling in the missing
+          colours. They differ in which neighbours they trust.
         </p>
 
         <div class="guess">
@@ -246,11 +257,11 @@
             </div>
             <figcaption class="guess-caption">
               <span class="ramp-swatch" aria-hidden="true"></span>
-              <span id="error-caption">Error map, in 8-bit levels</span>
+              <span id="error-caption">Error map, in levels</span>
             </figcaption>
             <p class="status-line" id="error-note">
-              Darker areas are larger errors. Choose the zone plate scene to see where
-              the methods disagree most.
+              Darker areas are larger errors. Pick the zone plate scene to see where the
+              methods disagree most.
             </p>
           </figure>
 
@@ -273,19 +284,19 @@
             <dl class="faults" id="method-failures">
               <div>
                 <dt>Nearest neighbour</dt>
-                <dd>Copies one site into the next, so edges come out like a zip.</dd>
+                <dd>Copies the closest site that measured the colour, so edges look like a zip.</dd>
               </div>
               <div>
                 <dt>Bilinear</dt>
-                <dd>Averages its neighbours, so diagonal edges smear.</dd>
+                <dd>Averages the neighbours, so diagonal edges smear.</dd>
               </div>
               <div>
                 <dt>Hamilton–Adams</dt>
-                <dd>Commits to one direction, so an edge can staircase.</dd>
+                <dd>Picks one direction first, so a near-horizontal edge can staircase.</dd>
               </div>
               <div>
                 <dt>Malvar–He–Cutler</dt>
-                <dd>Smooths the error it cannot see, so fine colour bleeds.</dd>
+                <dd>Bilinear plus a sharpening step, so fine colour bleeds.</dd>
               </div>
             </dl>
           </div>
@@ -297,9 +308,13 @@
           <h2 id="numbers-title">One pixel, in numbers</h2>
           <div class="section-note">
             <p>
-              Click any pixel in the frame at the top. This panel prints what the
-              engine had for that site: the channel it measured, the two it invented,
-              and the arithmetic behind each one.
+              Click any pixel in the frame at the top. You'll see what the engine had for
+              that site: the one colour it measured, the two it guessed, and the
+              arithmetic behind each.
+            </p>
+            <p>
+              The values are levels, written DN. One level is one step on a scale that
+              runs from 0 to 4095.
             </p>
           </div>
         </header>
@@ -314,7 +329,7 @@
             </p>
           </div>
           <div id="explain-body">
-            <p class="status-line">Select a pixel in the frame at the top of the page.</p>
+            <p class="status-line">Click a pixel in the frame at the top.</p>
           </div>
         </div>
       </section>
@@ -324,7 +339,10 @@
           <h2 id="print-title">Eight ways to print one frame</h2>
           <div class="section-note">
             <p>
-              Expose freezes the frame. The measurements do not change; only the print
+              Those numbers aren't a picture yet. Printing is how they become one.
+            </p>
+            <p>
+              Expose freezes the frame. The measurements don't change; only the print
               does. Each treatment stands in for a real choice of paper, toner or
               developer strength.
             </p>
@@ -372,8 +390,8 @@
         <button class="btn btn-quiet sound-toggle" id="sound-toggle" aria-pressed="true">Sound on</button>
       </div>
       <p class="colophon-note">
-        No network requests, no sign-in, no download. The pipeline runs in a Web
-        Worker on this device.
+        Nothing leaves this device. The whole pipeline runs in a Web Worker in your
+        browser.
       </p>
     </footer>
 

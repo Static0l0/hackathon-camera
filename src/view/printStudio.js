@@ -40,19 +40,19 @@ export const TREATMENTS = [
   {
     id: 'straight',
     label: 'straight print',
-    note: 'The frame as the engine made it. No extra change. Every other treatment changes the print, not the photo.',
+    note: 'The frame as the engine made it. Nothing added. Every other treatment changes the print, not the photo.',
     apply: (r, g, b) => [r, g, b],
   },
   {
     id: 'hardPaper',
     label: 'hard paper',
-    note: 'Hard paper makes darks darker and lights lighter. Small differences become easy to see.',
+    note: 'Hard paper pushes darks darker and lights lighter, so small differences become easy to see.',
     apply: (r, g, b) => [hardPaper(r), hardPaper(g), hardPaper(b)],
   },
   {
     id: 'sepia',
     label: 'sepia toned',
-    note: 'Sepia toning changes the silver in a print to a sulphide. Brightness stays the same. The colour becomes one warm brown.',
+    note: 'Sepia turns the silver in a print into a sulphide. Brightness stays the same. Everything becomes one warm brown.',
     apply(r, g, b) {
       const y = luma(r, g, b);
       return [byte(y * 1.07), byte(y * 0.79), byte(y * 0.54)];
@@ -61,19 +61,19 @@ export const TREATMENTS = [
   {
     id: 'cyanotype',
     label: 'cyanotype',
-    note: 'A cyanotype is an iron print. One chemical reaction makes the image, so everything becomes Prussian blue.',
+    note: 'A cyanotype is an iron print. One chemical reaction makes the image, so everything turns Prussian blue.',
     apply: cyanotype,
   },
   {
     id: 'negative',
     label: 'negative',
-    note: 'The sensor records a negative. Light becomes dark. The print reverses it to show the scene.',
+    note: 'Every tone flips: what was bright prints dark. That is how a photographic negative works. Print it again and the scene comes back.',
     apply: (r, g, b) => [byte(255 - r), byte(255 - g), byte(255 - b)],
   },
   {
     id: 'solarise',
     label: 'solarise',
-    note: 'Re-expose a print during development. The brightest tones turn dark. A thin bright line appears at each edge.',
+    note: 'Expose the print again while it develops. The brightest tones turn dark, and a thin bright line appears at each edge.',
     apply(r, g, b) {
       const flip = (v) => (v > 150 ? byte(255 - (v - 150) * 2.2) : v);
       return [flip(r), flip(g), flip(b)];
@@ -82,7 +82,7 @@ export const TREATMENTS = [
   {
     id: 'lith',
     label: 'lith print',
-    note: 'Lith developer makes the image black or white with few tones between. The photo becomes a graphic.',
+    note: 'Lith developer keeps almost black or almost white, with few tones between. The photo turns into a graphic.',
     apply(r, g, b) {
       const step = (v) => (v < 80 ? 12 : v < 170 ? 128 : 246);
       return [step(r), step(g), step(b)];
@@ -91,7 +91,7 @@ export const TREATMENTS = [
   {
     id: 'splitTone',
     label: 'split tone',
-    note: 'Two toners colour the print. Darks turn cool. Lights turn warm. Midtones carry both.',
+    note: 'Two toners colour one print. Darks go cool, lights go warm, and the midtones carry both.',
     apply(r, g, b) {
       const t = luma(r, g, b) / 255;
       return [byte(28 + t * 222), byte(38 + t * 176), byte(96 + t * 58)];

@@ -207,7 +207,7 @@ export function explainMalvarHeCutlerPixel(mosaic, mask, width, height, x, y) {
         channel,
         measured: true,
         value: mosaic[i],
-        formula: 'Measured at this site. No filter is used.',
+        formula: 'Measured here. No filter is applied.',
         kernel: null,
         kernelGrid: null,
         taps: [],

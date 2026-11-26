@@ -16,9 +16,9 @@ import { DEMOSAIC_METHODS, GREEN_RULES, SCENE_INFO, SCENE_NAMES } from '../engin
 
 /** How each green rule is written on screen. Short: the menu is narrow. */
 const GREEN_RULE_LABELS = {
-  gradient: 'Compare both directions',
-  horizontal: 'Always the row',
-  vertical: 'Always the column',
+  gradient: 'Compare both',
+  horizontal: 'Row only',
+  vertical: 'Column only',
   average: 'Average all four',
 };
 
@@ -116,7 +116,7 @@ const CONTROLS = [
     // that does nothing is worse than no control.
     key: 'greenRule',
     group: 'reconstruct',
-    label: 'Green rule',
+    label: 'Which green',
     type: 'select',
     options: GREEN_RULES,
     format: (v) => GREEN_RULE_LABELS[v] ?? v,
@@ -124,7 +124,7 @@ const CONTROLS = [
   {
     key: 'olpfSigma',
     group: 'lab',
-    label: 'Optical low-pass',
+    label: 'Lens blur',
     type: 'range',
     min: 0,
     max: 3,

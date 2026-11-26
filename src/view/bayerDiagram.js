@@ -95,7 +95,7 @@ export function createBayerDiagram({ canvas, caption, counts }) {
   function update(coverage) {
     const percent = (value) => `${(value * 100).toFixed(0)}%`;
     caption.textContent =
-      `RGGB over ${TILES}×${TILES} sites · green keeps ${percent(coverage.green)} of the frame`;
+      `R, G, G, B over ${TILES}×${TILES} sites · green fills ${percent(coverage.green)} of the frame`;
 
     const colours = channels();
     counts.replaceChildren(

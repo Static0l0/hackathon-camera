@@ -101,7 +101,7 @@ export function explainBilinearPixel(mosaic, mask, width, height, x, y) {
       measured: false,
       taps,
       value,
-      formula: `Mean of ${taps.length} neighbours: ${sum.toFixed(1)} / ${taps.length}`,
+      formula: `Average of ${taps.length} neighbours: ${sum.toFixed(1)} / ${taps.length}`,
     });
   }
   return { method: 'bilinear', channels };

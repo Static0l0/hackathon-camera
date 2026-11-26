@@ -302,6 +302,14 @@ main,
   color: var(--ink-3);
 }
 
+/* The plain-words gloss on the two scores. Same row as the acronym, a step
+   quieter, so the number still reads first. */
+.masthead-gloss {
+  font-size: 10px;
+  color: var(--ink-3);
+  opacity: 0.85;
+}
+
 .masthead-live dd {
   margin: 0;
   font-family: var(--mono);
@@ -1924,6 +1932,16 @@ main {
 @media (max-width: 940px) {
   :root {
     --gutter: 28px;  }
+
+  /* No room for the gloss beside the number here: the cover note explains both
+     scores in full, so the bar keeps the acronym and the value. */
+  .masthead-gloss {
+    display: none;
+  }
+
+  .masthead-live dd {
+    white-space: nowrap;
+  }
 
   .cover-head,
   .section-head {

@@ -80,7 +80,7 @@ export function createExplainPanel({ root }) {
       const meta = document.createElement('p');
       meta.className = 'note';
       meta.textContent =
-        `Row ${explanation.y}, column ${explanation.x}. ${methodLabel}.`;
+        `Row ${explanation.y}, column ${explanation.x} · ${methodLabel}`;
       root.append(meta);
 
       const grid = document.createElement('div');
@@ -125,13 +125,15 @@ export function createExplainPanel({ root }) {
           block.append(formula);
         }
 
-        // Hamilton-Adams: the actual gradients the decision used.
+        // Hamilton-Adams: the actual gradients the decision used. The sentence
+        // above already says which one won, so this line only prices them.
         if (channel.gradient) {
-          const { dH, dV, direction } = channel.gradient;
+          const { dH, dV } = channel.gradient;
           const gradients = document.createElement('div');
           gradients.className = 'channel-formula';
           gradients.textContent =
-            `Row gradient ${formatValue(dH)}. Column gradient ${formatValue(dV)}. Chosen: ${direction}.`;
+            `Change along the row ${formatValue(dH)}. Change down the column ` +
+            `${formatValue(dV)}.`;
           block.append(gradients);
         }
 
@@ -148,7 +150,7 @@ export function createExplainPanel({ root }) {
     /**
      * @param {string} message
      */
-    clear(message = 'Select a pixel in the frame at the top of the page.') {
+    clear(message = 'Click a pixel in the frame at the top.') {
       root.replaceChildren();
       const placeholder = document.createElement('p');
       placeholder.className = 'placeholder';

@@ -245,14 +245,14 @@ export function explainHamiltonAdamsPixel(mosaic, mask, width, height, x, y, gre
     const step = greenAtColourSite(mosaic, width, height, x, y, rule);
     let formula;
     if (rule === 'average') {
-      formula = 'Mean of four green neighbours. No direction is chosen.';
+      formula = 'The mean of four green neighbours. No direction is chosen.';
     } else if (rule === 'horizontal' || rule === 'vertical') {
-      formula = `The gradient test is off. The ${rule === 'horizontal' ? 'row' : 'column'} pair is used at every site.`;
+      formula = `The comparison is off, so the ${rule === 'horizontal' ? 'row' : 'column'} pair is used at every site.`;
     } else if (step.direction === 'equal') {
-      formula = 'The two gradients are equal. The mean of both directions is used.';
+      formula = 'Both directions change equally, so the mean of both is used.';
     } else {
       const axis = step.direction === 'horizontal' ? 'row' : 'column';
-      formula = `The ${axis} gradient is smaller. The ${axis} pair is used.`;
+      formula = `The ${axis} changes less, so the ${axis} pair is used.`;
     }
     channels.push({
       channel: 1,
@@ -285,7 +285,7 @@ export function explainHamiltonAdamsPixel(mosaic, mask, width, height, x, y, gre
       channel: own === 0 ? 2 : 0,
       measured: false,
       value: green[i] + mean,
-      formula: 'Green plus the mean of four diagonal colour differences.',
+      formula: 'Green, plus the average colour difference from four diagonal neighbours.',
       taps: d,
     });
   } else {
@@ -308,7 +308,7 @@ export function explainHamiltonAdamsPixel(mosaic, mask, width, height, x, y, gre
       channel: horizontalChannel,
       measured: false,
       value: green[i] + horizontalDiff,
-      formula: 'Green plus the mean colour difference along the row.',
+      formula: 'Green, plus the average colour difference along the row.',
       taps: [
         { x: mirrorIndex(x - 1, width), y, difference: mosaic[leftIndex] - green[leftIndex] },
         { x: mirrorIndex(x + 1, width), y, difference: mosaic[rightIndex] - green[rightIndex] },
@@ -318,7 +318,7 @@ export function explainHamiltonAdamsPixel(mosaic, mask, width, height, x, y, gre
       channel: verticalChannel,
       measured: false,
       value: green[i] + verticalDiff,
-      formula: 'Green plus the mean colour difference down the column.',
+      formula: 'Green, plus the average colour difference down the column.',
       taps: [
         { x, y: mirrorIndex(y - 1, height), difference: mosaic[upIndex] - green[upIndex] },
         { x, y: mirrorIndex(y + 1, height), difference: mosaic[downIndex] - green[downIndex] },

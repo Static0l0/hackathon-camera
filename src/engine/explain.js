@@ -69,9 +69,9 @@ export function neighbourhood(mosaic, mask, width, height, x, y, radius = EXPLAI
 export function buildSentence(channel, channels) {
   const measured = channels.find((c) => c.measured);
   const guessed = channels.filter((c) => !c.measured);
-  if (!measured) return 'No measurement at this site.';
+  if (!measured) return 'Nothing was measured at this site.';
   // One fact per sentence. Short words. The number is the evidence.
-  const head = `This site measured ${CHANNEL_NAMES[channel]} only: ${Math.round(measured.value)}.`;
+  const head = `This site counted ${CHANNEL_NAMES[channel]} only: ${Math.round(measured.value)}.`;
   if (guessed.length === 0) return `${head} The camera guessed nothing here.`;
   const list = guessed.map((g) => `${CHANNEL_NAMES[g.channel]} (${Math.round(g.value)})`).join(' and ');
   return `${head} The camera guessed ${list}.`;
