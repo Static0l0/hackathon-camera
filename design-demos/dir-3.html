@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The Mosaic · one split</title>
+    <style>
+      @font-face {
+        font-family: "Instrument Sans";
+        src: url("fonts/instrument-sans-latin-wght-normal.woff2") format("woff2-variations");
+        font-weight: 400 700;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "JetBrains Mono";
+        src: url("fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2-variations");
+        font-weight: 400 700;
+        font-display: swap;
+      }
+
+      :root {
+        --dark: #0e100f;
+        --dark-2: #151816;
+        --dark-ink: #e9e7de;
+        --dark-dim: #b2b8ae;
+        --dark-mute: #8d948c;
+        --dark-line: #262b27;
+        --paper: #f2eee3;
+        --paper-2: #e8e3d4;
+        --ink: #1a1710;
+        --ink-2: #544d3d;
+        --ink-3: #6f6857;
+        --line: rgba(26, 23, 16, 0.16);
+        --line-2: rgba(26, 23, 16, 0.3);
+        --mark: #c0462c;
+        --sans: "Instrument Sans", system-ui, sans-serif;
+        --mono: "JetBrains Mono", ui-monospace, monospace;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; }
+      body {
+        background: var(--paper);
+        color: var(--ink);
+        font: 16px/1.6 var(--sans);
+        -webkit-font-smoothing: antialiased;
+      }
+      img { display: block; width: 100%; }
+
+      .mono { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+      /* The seam is the page: a fixed rule down the middle of the document. */
+      .seam {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 1px;
+        background: var(--mark);
+        opacity: 0.75;
+        z-index: 4;
+        pointer-events: none;
+      }
+
+      .top {
+        position: sticky;
+        top: 0;
+        z-index: 6;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        background: var(--dark);
+      }
+      .top .half {
+        display: flex;
+        align-items: baseline;
+        gap: 18px;
+        padding: 14px 40px;
+        font-size: 13px;
+      }
+      .top .half:last-child { background: var(--paper); color: var(--ink-2); }
+      .top .half:first-child { color: var(--dark-ink); }
+      .brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 14px; }
+      .mark { display: grid; grid-template-columns: repeat(2, 6px); grid-template-rows: repeat(2, 6px); gap: 1px; }
+      .mark i { border-radius: 1px; }
+      .mark i:nth-child(1) { background: #c0503a; }
+      .mark i:nth-child(2) { background: #4f8a58; }
+      .mark i:nth-child(3) { background: #4f8a58; }
+      .mark i:nth-child(4) { background: #4a6f96; }
+      .top .who { color: var(--dark-mute); }
+      .top .half:last-child .who { color: var(--ink-3); }
+      .top .right { margin-left: auto; display: flex; gap: 16px; color: var(--ink-3); }
+
+      /* ------------------------------------------------------------- rows */
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        position: relative;
+      }
+
+      .cell { padding: 46px 40px; }
+      .cell.l { background: var(--dark); color: var(--dark-ink); }
+      .cell.r { background: var(--paper); color: var(--ink); }
+
+      .cell.l + .cell.r { border-left: 1px solid transparent; }
+
+      .kicker {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .kicker .no { font-family: var(--mono); font-size: 12px; }
+      .kicker .side { font-family: var(--mono); font-size: 12px; }
+      .cell.l .kicker { color: var(--dark-mute); }
+      .cell.r .kicker { color: var(--ink-3); }
+      .kicker .side::before { content: "— "; }
+
+      /* Section titles run straight across the seam: measured words on the dark
+         side, guessed words on the light side, one line, no break. */
+      h2 {
+        margin: 0 0 14px;
+        width: max-content;
+        max-width: calc(50vw + 6ch);
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: clamp(19px, 1.7vw, 23px);
+        line-height: 1.2;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        background-image: linear-gradient(
+          90deg,
+          var(--dark-ink) 0 calc(50vw - 1px),
+          var(--ink) calc(50vw + 1px)
+        );
+        background-attachment: fixed;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .cell p { margin: 0; max-width: 46ch; }
+      .cell p + p { margin-top: 12px; }
+      .cell.l p { color: var(--dark-dim); }
+      .cell.r p { color: var(--ink-2); }
+
+      .cell .lead { color: inherit; }
+
+      /* full-bleed band that spans both halves */
+      .band {
+        grid-column: 1 / -1;
+        padding: 0;
+        background: var(--dark);
+      }
+
+      /* ------------------------------------------------------------- hero */
+
+      .hero {
+        position: relative;
+        height: min(72vh, 640px);
+        overflow: hidden;
+        background: var(--dark);
+      }
+      .hero img { position: absolute; inset: 0; height: 100%; object-fit: cover; }
+      .hero img.photo { clip-path: inset(0 0 0 50%); }
+      .hero .shade {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, rgba(10, 12, 11, 0.72) 0 34%, rgba(10, 12, 11, 0) 52%);
+      }
+      .hero .headline {
+        position: absolute;
+        left: 40px;
+        bottom: 40px;
+        width: min(54%, 560px);
+        color: #f4f1e6;
+      }
+      .hero h1 {
+        margin: 0;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: clamp(28px, 3vw, 42px);
+        line-height: 1.14;
+        letter-spacing: -0.02em;
+        font-weight: 500;
+      }
+      .hero .tags {
+        position: absolute;
+        top: 18px;
+        left: 40px;
+        right: 40px;
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: #f4f1e6;
+      }
+      .hero .tags span {
+        background: rgba(12, 14, 13, 0.55);
+        padding: 3px 7px;
+        border-radius: 2px;
+      }
+
+      /* --------------------------------------------------------- specimen */
+
+      .plate-img { width: 100%; display: block; }
+      .band .frame { padding: 0; }
+      .band .strip {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 40px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--dark-mute);
+        background: var(--dark-2);
+      }
+
+      /* --------------------------------------------------------- splits */
+
+      .split-img { position: relative; }
+      .split-img img + img { position: absolute; inset: 0; clip-path: inset(0 0 0 50%); }
+
+      /* --------------------------------------------------------- filters */
+
+      .grid6 { display: grid; grid-template-columns: repeat(6, 1fr); border: 1px solid #2b302b; max-width: 320px; }
+      .site { aspect-ratio: 1; display: grid; place-items: center; font: 600 12px var(--mono); color: #0e100f; border-right: 1px solid var(--dark); border-bottom: 1px solid var(--dark); }
+      .site.r { background: #c0503a; }
+      .site.g { background: #4f8a58; }
+      .site.b { background: #4a6f96; }
+
+      .counts { display: grid; gap: 0; margin-top: 18px; max-width: 320px; }
+      .counts div { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--dark-line); color: var(--dark-dim); font-size: 13.5px; }
+      .counts b { font-family: var(--mono); font-size: 14px; font-weight: 400; color: var(--dark-ink); }
+
+      /* ---------------------------------------------------------- table */
+
+      table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+      caption { text-align: left; font-family: var(--mono); font-size: 12px; color: var(--dark-mute); padding-bottom: 10px; }
+      th { text-align: left; font-weight: 500; font-size: 12px; color: var(--dark-mute); padding: 0 0 8px; border-bottom: 1px solid #2b302b; }
+      th.r, td.r { text-align: right; font-variant-numeric: tabular-nums; }
+      td { padding: 10px 0; border-bottom: 1px solid var(--dark-line); color: var(--dark-dim); }
+      td.r { font-family: var(--mono); font-size: 12.5px; color: var(--dark-ink); }
+      tr.on td { color: var(--dark-ink); }
+      tr.on td:first-child { box-shadow: inset 2px 0 0 var(--mark); padding-left: 10px; }
+      .bar { display: inline-block; height: 2px; background: #333a34; vertical-align: 3px; margin-right: 9px; }
+      tr.on .bar { background: var(--dark-ink); }
+
+      .faults { display: grid; gap: 10px; margin: 0; }
+      .faults dt { font-size: 13px; color: var(--ink); }
+      .faults dd { margin: 1px 0 0; font-size: 13px; color: var(--ink-3); }
+      .cell.l .faults dt { color: var(--dark-ink); }
+      .cell.l .faults dd { color: var(--dark-mute); }
+
+      /* --------------------------------------------------------- numbers */
+
+      .readrow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid #2b302b; }
+      .readrow div { padding: 12px 14px 14px 0; border-bottom: 1px solid var(--dark-line); }
+      .readrow dt { font-size: 12px; color: var(--dark-mute); }
+      .readrow dd { margin: 3px 0 0; font: 400 24px var(--mono); font-variant-numeric: tabular-nums; color: var(--dark-ink); }
+      .readrow dd small { font-size: 11px; color: var(--dark-mute); margin-left: 4px; }
+
+      .site-card { border: 1px solid #2b302b; background: var(--dark-2); padding: 16px; }
+      .site-card h3 { margin: 0 0 4px; font: 400 12.5px var(--sans); color: var(--dark-mute); }
+      .site-card .site-line { display: flex; align-items: baseline; gap: 10px; }
+      .site-card .swatch { width: 9px; height: 9px; border-radius: 1px; }
+      .site-card .dn { font: 400 30px var(--mono); font-variant-numeric: tabular-nums; color: var(--dark-ink); letter-spacing: -0.02em; }
+      .site-card .dn small { font-size: 12px; color: var(--dark-mute); margin-left: 4px; }
+      .site-card p { margin: 6px 0 0; font-size: 12.5px; color: var(--dark-mute); }
+
+      .guess-list { display: grid; gap: 14px; }
+      .guess-item { border-top: 1px solid var(--line-2); padding-top: 10px; display: grid; gap: 4px; }
+      .guess-item .h { display: flex; align-items: baseline; gap: 8px; font-size: 13px; color: var(--ink-2); }
+      .guess-item .swatch { width: 8px; height: 8px; border-radius: 1px; }
+      .guess-item .big { font: 400 26px var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); letter-spacing: -0.02em; }
+      .guess-item .big small { font-size: 12px; color: var(--ink-3); margin-left: 5px; }
+      .guess-item p { margin: 0; font-size: 13px; color: var(--ink-3); }
+
+      /* ----------------------------------------------------------- print */
+
+      .treatments { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 16px; max-width: 420px; }
+      .treatment {
+        padding: 8px 10px;
+        text-align: left;
+        font: 13px var(--sans);
+        color: var(--ink-2);
+        background: transparent;
+        border: 1px solid var(--line-2);
+        border-radius: 2px;
+        cursor: pointer;
+      }
+      .treatment[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+
+      .foot {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .foot div { padding: 18px 40px 26px; font-family: var(--mono); font-size: 12px; }
+      .foot div:first-child { background: var(--dark); color: var(--dark-mute); }
+      .foot div:last-child { color: var(--ink-3); }
+
+      /* ------------------------------------------------------- responsive */
+
+      @media (max-width: 860px) {
+        .seam { display: none; }
+        .top, .row, .foot { grid-template-columns: 1fr; }
+        .top .half:last-child { display: none; }
+        .cell { padding: 34px 22px; }
+        .hero { height: 58vh; }
+        .hero img.photo { clip-path: none; }
+        .hero .shade { background: linear-gradient(180deg, rgba(10, 12, 11, 0.5) 0, rgba(10, 12, 11, 0.82) 100%); }
+        .hero .headline { width: auto; right: 22px; }
+        .top .who { display: none; }
+        .hero .headline { left: 22px; bottom: 22px; }
+        .hero .tags { left: 22px; right: 22px; }
+        .band .strip { padding: 8px 22px; }
+        .foot div { padding: 16px 22px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="seam" aria-hidden="true"></div>
+
+    <header class="top">
+      <div class="half">
+        <span class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>The Mosaic</span>
+        <span class="who mono">measured</span>
+      </div>
+      <div class="half">
+        <span class="who mono">guessed</span>
+        <span class="right mono"><span>PSNR 41.5 dB</span><span>SNR 28.0 dB</span></span>
+      </div>
+    </header>
+
+    <section class="hero">
+      <img src="assets/raw.png" alt="The raw mosaic, one colour per site" />
+      <img class="photo" src="assets/photo.png" alt="The finished photograph" />
+      <div class="shade"></div>
+      <div class="tags">
+        <span>sensor</span>
+        <span>photo</span>
+      </div>
+      <div class="headline">
+        <h1>A camera only measures one colour per pixel</h1>
+      </div>
+    </section>
+
+    <section class="row">
+      <div class="cell l">
+        <div class="kicker"><span class="no">01</span><span class="side">measured</span></div>
+        <h2>Every site counts one colour</h2>
+        <p>
+          A sensor is a grid of tiny spots called sites. Each site sits under one colour
+          filter, so it counts one colour only. 384 × 216 sites, 12 bit each, so every
+          value runs from 0 to 4095.
+        </p>
+        <p class="mono" style="margin-top: 18px; color: var(--dark-mute)">
+          Drag the divider above, or use the arrow keys. Click a pixel to see its numbers.
+        </p>
+      </div>
+      <div class="cell r">
+        <div class="kicker"><span class="no">01</span><span class="side">guessed</span></div>
+        <h2>Every pixel shows three</h2>
+        <p>
+          A pixel is the dot in the finished photo. Two of its three colour numbers were
+          never measured — software guesses them.
+        </p>
+        <p>
+          The number on the right of the bar is the guess score. PSNR 41.5 dB says how
+          close the guess lands to the real picture; higher is better. SNR 28.0 dB says
+          how far the signal sits above the noise.
+        </p>
+      </div>
+    </section>
+
+    <section class="band">
+      <img class="plate-img" src="assets/stack.png" alt="A 24 by 24 patch of the sensor, pulled into four layers" />
+      <div class="strip">
+        <span>02 · four layers above every pixel</span>
+        <span>patch 24 × 24 · 859,703 electrons · fully apart</span>
+      </div>
+    </section>
+
+    <section class="row">
+      <div class="cell l">
+        <div class="kicker"><span class="no">02</span><span class="side">measured</span></div>
+        <p class="lead">
+          Start with one site. Light passes a microlens, which gathers it. Then a colour
+          filter, which keeps one colour. Then a photodiode, which counts the electrons
+          that land. Then a circuit, which reads the count.
+        </p>
+        <ol class="mono" style="margin: 20px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; color: var(--dark-mute)">
+          <li>01 &nbsp; Microlens — gathers light</li>
+          <li>02 &nbsp; Colour filter — keeps one colour</li>
+          <li>03 &nbsp; Photodiode — counts electrons</li>
+          <li>04 &nbsp; Circuit — reads the count</li>
+        </ol>
+      </div>
+      <div class="cell r">
+        <div class="kicker"><span class="no">02</span><span class="side">guessed</span></div>
+        <h2>One colour leaves two empty</h2>
+        <p>
+          Each site has one filter, so it records one colour. The filters repeat every two
+          sites: red, green, green, blue. Half of them are green, because your eye reads
+          green detail best.
+        </p>
+        <p>
+          A red site never records green or blue. Those two numbers aren't stored
+          somewhere else in the file — they were never there.
+        </p>
+      </div>
+    </section>
+
+    <section class="row">
+      <div class="cell l">
+        <div class="kicker"><span class="no">03</span><span class="side">measured</span></div>
+        <div class="grid6">
+          <span class="site r">R</span><span class="site g">G</span><span class="site r">R</span><span class="site g">G</span><span class="site r">R</span><span class="site g">G</span>
+          <span class="site g">G</span><span class="site b">B</span><span class="site g">G</span><span class="site b">B</span><span class="site g">G</span><span class="site b">B</span>
+          <span class="site r">R</span><span class="site g">G</span><span class="site r">R</span><span class="site g">G</span><span class="site r">R</span><span class="site g">G</span>
+          <span class="site g">G</span><span class="site b">B</span><span class="site g">G</span><span class="site b">B</span><span class="site g">G</span><span class="site b">B</span>
+          <span class="site r">R</span><span class="site g">G</span><span class="site r">R</span><span class="site g">G</span><span class="site r">R</span><span class="site g">G</span>
+          <span class="site g">G</span><span class="site b">B</span><span class="site g">G</span><span class="site b">B</span><span class="site g">G</span><span class="site b">B</span>
+        </div>
+        <div class="counts">
+          <div><span>Red sites</span><b>25%</b></div>
+          <div><span>Green sites</span><b>50%</b></div>
+          <div><span>Blue sites</span><b>25%</b></div>
+        </div>
+      </div>
+      <div class="cell r">
+        <div class="kicker"><span class="no">03</span><span class="side">guessed</span></div>
+        <h2>Filling the gaps</h2>
+        <p>
+          So the camera fills each missing colour from the neighbours it does have.
+          That's a guess. A red or blue site has no green reading, and its two green
+          neighbours — one along the row, one down the column — are all the evidence
+          there is.
+        </p>
+        <p>
+          Every method does this at every site, then repeats it for red and blue. They
+          all do the same job — demosaicing, which just means filling in the missing
+          colours. They differ in which neighbours they trust.
+        </p>
+      </div>
+    </section>
+
+    <section class="row">
+      <div class="cell l">
+        <div class="kicker"><span class="no">04</span><span class="side">measured</span></div>
+        <h2>Four ways to fill it</h2>
+        <table>
+          <caption>Reconstruction quality per method</caption>
+          <thead>
+            <tr><th>Method</th><th class="r">PSNR</th><th class="r">Colour error</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Nearest neighbour</td><td class="r">36.98 dB</td><td class="r">2.98</td></tr>
+            <tr><td>Bilinear</td><td class="r"><span class="bar" style="width: 34px"></span>41.26 dB</td><td class="r">2.01</td></tr>
+            <tr class="on"><td>Hamilton–Adams</td><td class="r"><span class="bar" style="width: 40px"></span>41.54 dB</td><td class="r">1.30</td></tr>
+            <tr><td>Malvar–He–Cutler</td><td class="r"><span class="bar" style="width: 42px"></span>41.65 dB</td><td class="r">1.40</td></tr>
+          </tbody>
+        </table>
+        <p class="mono" style="color: var(--dark-mute); margin-top: 12px">
+          Hamilton–Adams: 41.54 dB on this frame. Highest wins; the bars are ranked, not
+          absolute.
+        </p>
+        <div style="margin-top: 22px; border: 1px solid #2b302b; padding: 8px; background: #141715">
+          <img src="assets/errorc.png" alt="Error map of this frame" />
+        </div>
+        <p class="mono" style="color: var(--dark-mute); margin-top: 8px">
+          Error map, in levels · 0 to 13 · mean 1.65
+        </p>
+      </div>
+      <div class="cell r">
+        <div class="kicker"><span class="no">04</span><span class="side">guessed</span></div>
+        <h2>What each one gets wrong</h2>
+        <dl class="faults">
+          <div><dt>Nearest neighbour</dt><dd>Copies the closest site that measured the colour, so edges look like a zip.</dd></div>
+          <div><dt>Bilinear</dt><dd>Averages the neighbours, so diagonal edges smear.</dd></div>
+          <div><dt>Hamilton–Adams</dt><dd>Picks one direction first, so a near-horizontal edge can staircase.</dd></div>
+          <div><dt>Malvar–He–Cutler</dt><dd>Bilinear plus a sharpening step, so fine colour bleeds.</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="row">
+      <div class="cell l">
+        <div class="kicker"><span class="no">05</span><span class="side">measured</span></div>
+        <h2>One pixel, in numbers</h2>
+        <div class="site-card">
+          <h3>red · measured at this site</h3>
+          <div class="site-line">
+            <span class="swatch" style="background: #c0503a"></span>
+            <span class="dn">1282<small>DN</small></span>
+          </div>
+          <p>Row 108, column 192 · Hamilton–Adams</p>
+        </div>
+        <dl class="readrow" style="margin-top: 16px">
+          <div><dt>Signal to noise</dt><dd>28.0<small>dB</small></dd></div>
+          <div><dt>Signal per site</dt><dd>1112<small>e⁻</small></dd></div>
+          <div><dt>Blown out</dt><dd>0.0<small>%</small></dd></div>
+          <div><dt>Compute time</dt><dd>213<small>ms</small></dd></div>
+        </dl>
+      </div>
+      <div class="cell r">
+        <div class="kicker"><span class="no">05</span><span class="side">guessed</span></div>
+        <h2>The two numbers that were written</h2>
+        <p style="margin-bottom: 16px">
+          This site counted red only: 1282. The camera guessed green (1582) and blue
+          (1672). The values are levels, written DN. One level is one step on a scale
+          that runs from 0 to 4095.
+        </p>
+        <div class="guess-list">
+          <div class="guess-item">
+            <span class="h"><span class="swatch" style="background: #4f8a58"></span>green · guessed</span>
+            <span class="big">1582<small>DN</small></span>
+            <p>The row changes less, so the row pair is used. Change along the row 160. Change down the column 408.</p>
+          </div>
+          <div class="guess-item">
+            <span class="h"><span class="swatch" style="background: #4a6f96"></span>blue · guessed</span>
+            <span class="big">1672<small>DN</small></span>
+            <p>Green, plus the average colour difference from four diagonal neighbours.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="row">
+      <div class="cell l">
+        <div class="kicker"><span class="no">06</span><span class="side">measured</span></div>
+        <h2>The numbers stay put</h2>
+        <p>
+          Those numbers aren't a picture yet. Printing is how they become one. Expose
+          freezes the frame; the measurements don't change.
+        </p>
+        <dl class="readrow" style="margin-top: 18px">
+          <div><dt>PSNR</dt><dd>41.5<small>dB</small></dd></div>
+          <div><dt>Colour error</dt><dd>1.30<small>DN</small></dd></div>
+          <div><dt>Filter split</dt><dd style="font-size: 18px">25% · 50% · 25%</dd></div>
+          <div><dt>Compute time</dt><dd>213<small>ms</small></dd></div>
+        </dl>
+      </div>
+      <div class="cell r">
+        <div class="kicker"><span class="no">06</span><span class="side">printed</span></div>
+        <h2>Eight ways to print one frame</h2>
+        <div style="border: 1px solid var(--line-2); padding: 8px">
+          <img src="assets/printc.png" alt="The printed frame" />
+        </div>
+        <p style="margin-top: 10px; font-size: 13px; color: var(--ink-3)">
+          Each treatment stands in for a real choice of paper, toner or developer
+          strength. Only the print changes, not the photo.
+        </p>
+        <div class="treatments">
+          <button class="treatment" aria-pressed="true">straight print</button>
+          <button class="treatment" aria-pressed="false">hard paper</button>
+          <button class="treatment" aria-pressed="false">sepia toned</button>
+          <button class="treatment" aria-pressed="false">cyanotype</button>
+          <button class="treatment" aria-pressed="false">negative</button>
+          <button class="treatment" aria-pressed="false">solarise</button>
+          <button class="treatment" aria-pressed="false">lith print</button>
+          <button class="treatment" aria-pressed="false">split tone</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <div>Computed in this browser in 213 ms · 384×216 pixels</div>
+      <div>Nothing leaves this device. The pipeline runs in a Web Worker.</div>
+    </footer>
+  </body>
+</html>

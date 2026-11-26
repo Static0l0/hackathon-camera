@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>The Mosaic · six skeletons</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 40px;
+        background: #0b0b0c;
+        color: #cfcac0;
+        font: 13px/1.5 "Helvetica Neue", Arial, sans-serif;
+      }
+      h1 { font-size: 15px; font-weight: 600; letter-spacing: .02em; margin: 0 0 4px; color: #f0ece2; }
+      .lede { margin: 0 0 32px; color: #8d887e; max-width: 62ch; }
+      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px 24px; }
+      .card { display: flex; flex-direction: column; gap: 10px; }
+      .frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 10;
+        overflow: hidden;
+        border: 1px solid #2a2823;
+        border-radius: 3px;
+        background: #111;
+      }
+      .frame > .page { position: absolute; inset: 0; }
+      .cap { font-size: 11.5px; color: #8d887e; }
+      .cap b { display: block; color: #e9e4d8; font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+      .cap em { font-style: normal; color: #6f6a60; }
+
+      /* --- shared sketch atoms ------------------------------------------- */
+      .bar { position: absolute; left: 0; right: 0; height: 5.5%; background: #1a1916; }
+      .ln { background: #2c2a25; }
+      .big { font-family: Georgia, "Times New Roman", serif; }
+      .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+      /* 1 · left rail + stage */
+      .a1 { background: #101011; }
+      .a1 .bar { top: 0; }
+      .a1 .rail { position: absolute; left: 0; top: 5.5%; bottom: 0; width: 27%; background: #17171a; border-right: 1px solid #2c2a25; }
+      .a1 .rail i { position: absolute; left: 8%; right: 8%; height: 7%; background: #22232a; border-radius: 2px; }
+      .a1 .stage { position: absolute; left: 27%; right: 0; top: 5.5%; bottom: 0; padding: 6% 7%; }
+      .a1 .stage .img { width: 100%; height: 46%; background: linear-gradient(135deg,#33465c,#6d7f63); border-radius: 2px; }
+      .a1 .stage .t { height: 3.4%; width: 62%; background: #3b3a44; margin-top: 6%; }
+      .a1 .stage .t2 { height: 2.4%; width: 84%; background: #24242c; margin-top: 3%; }
+
+      /* 2 · stage with floating instrument bar */
+      .a2 { background: #0d0e0f; }
+      .a2 .hero { position: absolute; inset: 5.5% 0 0; background: linear-gradient(140deg,#2c3f55,#7d8a6d); }
+      .a2 .hud { position: absolute; left: 6%; right: 6%; bottom: 6%; height: 17%; background: rgba(12,12,14,.86); border: 1px solid #3a3a44; border-radius: 4px; }
+      .a2 .hud i { position: absolute; top: 26%; height: 44%; width: 18%; background: #232531; border-radius: 2px; }
+      .a2 .h1 { position: absolute; left: 6%; top: 12%; width: 46%; height: 7%; background: #e6e2d6; }
+      .a2 .h2 { position: absolute; left: 6%; top: 22%; width: 33%; height: 2.6%; background: #8f8a7e; }
+
+      /* 3 · contact sheet */
+      .b1 { background: #f4f1e8; }
+      .b1 .sheet { position: absolute; left: 6%; right: 6%; top: 9%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 3%; }
+      .b1 .cell { aspect-ratio: 16 / 10; background: #cfc9b8; border: 1px solid #b9b2a0; }
+      .b1 .cell.dark { background: #2b3327; }
+      .b1 .cell.mid { background: #8d9a86; }
+      .b1 .scr { position: absolute; left: 6%; top: 70%; width: 40%; height: 2.2%; background: #1d1c18; }
+      .b1 .scr2 { position: absolute; left: 6%; top: 74%; width: 26%; height: 2%; background: #b0a894; }
+      .b1 .mark { position: absolute; right: 8%; top: 66%; width: 18%; height: 22%; border: 2px solid #c8452c; border-radius: 50%; }
+
+      /* 4 · one frame, grease pencil marginalia */
+      .b2 { background: #efece2; }
+      .b2 .img { position: absolute; left: 20%; right: 20%; top: 14%; bottom: 20%; background: linear-gradient(135deg,#41566d,#8d9a86); }
+      .b2 .lg { position: absolute; left: 6%; top: 14%; width: 11%; height: 1.8%; background: #a49c88; }
+      .b2 .lg + .lg { top: 18%; }
+      .b2 .rt { position: absolute; right: 6%; top: 40%; width: 12%; height: 1.8%; background: #a49c88; }
+      .b2 .circ { position: absolute; left: 44%; top: 30%; width: 13%; height: 30%; border: 2px solid #c8452c; border-radius: 50%; }
+      .b2 .note { position: absolute; right: 4%; top: 20%; width: 13%; height: 16%; background: #fffdf6; border: 1px solid #cfc7b4; }
+
+      /* 5 · the page is one split, measured | guessed */
+      .c1 { background: #0f0f10; }
+      .c1 .left { position: absolute; inset: 0 50% 0 0; background: #15150f; }
+      .c1 .right { position: absolute; inset: 0 0 0 50%; background: #f1eee4; }
+      .c1 .seam { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #c8452c; }
+      .c1 .l1 { position: absolute; left: 8%; top: 12%; width: 36%; height: 5%; background: #e7e3d5; }
+      .c1 .l2 { position: absolute; left: 8%; top: 20%; width: 30%; height: 2.2%; background: #6d6a5e; }
+      .c1 .r1 { position: absolute; left: 56%; top: 12%; width: 34%; height: 5%; background: #1b1a15; }
+      .c1 .r2 { position: absolute; left: 56%; top: 20%; width: 26%; height: 2.2%; background: #8a8577; }
+      .c1 .limg { position: absolute; left: 8%; top: 32%; width: 34%; height: 34%; background: linear-gradient(135deg,#2f3a2a,#55603f); }
+      .c1 .rimg { position: absolute; left: 56%; top: 32%; width: 34%; height: 34%; background: linear-gradient(135deg,#5b7f9c,#8fa17c); }
+
+      /* 6 · stepped split, sections cross the seam */
+      .c2 { background: #101010; }
+      .c2 .st { position: absolute; left: 0; right: 0; height: 33.3%; border-bottom: 1px solid #2a2a26; }
+      .c2 .st:nth-child(2) { background: #f0ede3; border-bottom-color: #d9d3c2; }
+      .c2 .t1 { position: absolute; left: 6%; top: 10%; width: 30%; height: 4%; background: #dfdbcd; }
+      .c2 .t2 { position: absolute; left: 6%; top: 16%; width: 22%; height: 2%; background: #6f6b5f; }
+      .c2 .t3 { position: absolute; left: 52%; top: 44%; width: 30%; height: 4%; background: #1c1b17; }
+      .c2 .t4 { position: absolute; left: 52%; top: 50%; width: 20%; height: 2%; background: #8b8577; }
+    </style>
+  </head>
+  <body>
+    <h1>Six skeletons — one per candidate, before any of them is a page</h1>
+    <p class="lede">
+      Same content in all six: the plate, the four layers, the filter grid, the missing green, the numbers at one
+      site, the print. Only the skeleton changes. Three of these become full drafts.
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="frame">
+          <div class="page a1">
+            <div class="bar"></div>
+            <div class="rail">
+              <i style="top: 6%"></i><i style="top: 16%"></i><i style="top: 26%"></i>
+              <i style="top: 40%"></i><i style="top: 50%"></i>
+            </div>
+            <div class="stage">
+              <div class="img"></div>
+              <div class="t"></div>
+              <div class="t2"></div>
+            </div>
+          </div>
+        </div>
+        <p class="cap"><b>1 · Bench with a fixed rail</b>Controls never leave the left edge; the right side is a stage that swaps plates. <em>Borrowed from: lab instruments, DAW mixers.</em></p>
+      </div>
+
+      <div class="card">
+        <div class="frame">
+          <div class="page a2">
+            <div class="bar"></div>
+            <div class="hero"></div>
+            <div class="h1"></div>
+            <div class="h2"></div>
+            <div class="hud"><i style="left: 3%"></i><i style="left: 24%"></i><i style="left: 45%"></i><i style="left: 66%"></i><i style="left: 87%"></i></div>
+          </div>
+        </div>
+        <p class="cap"><b>2 · Full-bleed stage, controls as a HUD</b>The frame is the whole viewport; the instrument floats over it. <em>Borrowed from: camera viewfinders, flight displays.</em></p>
+      </div>
+
+      <div class="card">
+        <div class="frame">
+          <div class="page b1">
+            <div class="sheet">
+              <div class="cell dark"></div><div class="cell mid"></div><div class="cell"></div>
+              <div class="cell mid"></div><div class="cell"></div><div class="cell dark"></div>
+            </div>
+            <div class="scr"></div><div class="scr2"></div><div class="mark"></div>
+          </div>
+        </div>
+        <p class="cap"><b>3 · Contact sheet</b>The same frame printed at six stages, laid out in a grid, marked up like a proof. <em>Borrowed from: darkroom contact sheets.</em></p>
+      </div>
+
+      <div class="card">
+        <div class="frame">
+          <div class="page b2">
+            <div class="img"></div>
+            <div class="lg"></div><div class="lg" style="top: 18%"></div>
+            <div class="rt"></div>
+            <div class="circ"></div>
+            <div class="note"></div>
+          </div>
+        </div>
+        <p class="cap"><b>4 · One frame, marginalia</b>A single plate holds the page; type and numbers sit in the margins as annotations. <em>Borrowed from: annotated photographic prints.</em></p>
+      </div>
+
+      <div class="card">
+        <div class="frame">
+          <div class="page c1">
+            <div class="left"></div>
+            <div class="right"></div>
+            <div class="seam"></div>
+            <div class="l1"></div><div class="l2"></div><div class="limg"></div>
+            <div class="r1"></div><div class="r2"></div><div class="rimg"></div>
+          </div>
+        </div>
+        <p class="cap"><b>5 · The page is one split</b>Measured on the left, guessed on the right, all the way down. The seam never closes. <em>Borrowed from: before/after plates, dialectical spreads.</em></p>
+      </div>
+
+      <div class="card">
+        <div class="frame">
+          <div class="page c2">
+            <div class="st"></div><div class="st"></div><div class="st"></div>
+            <div class="t1"></div><div class="t2"></div>
+            <div class="t3"></div><div class="t4"></div>
+          </div>
+        </div>
+        <p class="cap"><b>6 · Stepped split</b>The split alternates sides every section, so the argument flips as you scroll. <em>Borrowed from: magazine spreads that alternate columns.</em></p>
+      </div>
+    </div>
+  </body>
+</html>

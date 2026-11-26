@@ -34,6 +34,8 @@
  *   --width   viewport width in CSS pixels  (default 1280)
  *   --height  viewport height in CSS pixels (default 900)
  *   --full    capture the whole document, not just the viewport
+ *   --clip    selector: capture just that element (scrolled into view first)
+ *   --scale   device scale for --clip / --full captures (default 1)
  *   --timeout ms to wait for --wait      (default 20000)
  */
 
@@ -206,7 +208,7 @@ try {
     }
   }
 
-  const shot = await capture(Boolean(flags.full));
+  const shot = await capture(Boolean(flags.full), flags.clip, Number(flags.scale ?? 1));
   writeFileSync(flags.out ?? 'shot.png', Buffer.from(shot.data, 'base64'));
   console.log(`saved ${flags.out ?? 'shot.png'}`);
 } catch (error) {
@@ -440,17 +442,49 @@ async function centreOf(selector, offset) {
 
 /**
  * @param {boolean} full
+ * @param {string|boolean|undefined} clipSelector
+ * @param {number} scale
  * @returns {Promise<{data: string}>}
  */
-async function capture(full) {
-  if (!full) return send('Page.captureScreenshot', { format: 'png' });
+async function capture(full, clipSelector, scale) {
+  if (typeof clipSelector === 'string') {
+    // Scroll first, measure second: a rect taken in the same tick as the scroll
+    // still describes the old position.
+    await evaluate(
+      `document.querySelector(${JSON.stringify(clipSelector)})` +
+        `?.scrollIntoView({ block: 'center' })`,
+    );
+    await sleep(320);
+    const rect = await evaluate(`(() => {
+      const element = document.querySelector(${JSON.stringify(clipSelector)});
+      if (!element) return null;
+      const box = element.getBoundingClientRect();
+      // The clip is in page coordinates, not viewport coordinates, so the
+      // scroll offset has to be added or a scrolled-to element captures blank.
+      return {
+        x: box.x + window.scrollX,
+        y: box.y + window.scrollY,
+        width: box.width,
+        height: box.height,
+      };
+    })()`);
+
+    if (!rect) throw new Error(`no element for ${clipSelector}`);
+
+    return send('Page.captureScreenshot', {
+      format: 'png',
+      clip: { ...rect, scale },
+    });
+  }
+
+  if (!full) return send('Page.captureScreenshot', { format: 'png', clip: undefined });
 
   const metrics = await send('Page.getLayoutMetrics');
   const size = metrics.cssContentSize;
   return send('Page.captureScreenshot', {
     format: 'png',
     captureBeyondViewport: true,
-    clip: { x: 0, y: 0, width: size.width, height: size.height, scale: 1 },
+    clip: { x: 0, y: 0, width: size.width, height: size.height, scale },
   });
 }
 

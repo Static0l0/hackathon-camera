@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The Mosaic · bench</title>
+    <style>
+      @font-face {
+        font-family: "Instrument Sans";
+        src: url("fonts/instrument-sans-latin-wght-normal.woff2") format("woff2-variations");
+        font-weight: 400 700;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "JetBrains Mono";
+        src: url("fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2-variations");
+        font-weight: 400 700;
+        font-display: swap;
+      }
+
+      :root {
+        color-scheme: dark;
+        --bg: #0c0d0f;
+        --panel: #12141a;
+        --panel-2: #171a21;
+        --rule: #232630;
+        --rule-2: #333846;
+        --ink: #e9eaec;
+        --dim: #99a1ac;
+        --mute: #8d96a3;
+        --accent: #86e0c8;
+        --r: #d8604a;
+        --g: #5aa86a;
+        --b: #5d8fd0;
+        --rail: 304px;
+        --pad: 44px;
+        --sans: "Instrument Sans", system-ui, sans-serif;
+        --mono: "JetBrains Mono", ui-monospace, monospace;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body { margin: 0; background: var(--bg); }
+
+      body {
+        color: var(--ink);
+        font: 15.5px/1.62 var(--sans);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      img { display: block; max-width: 100%; }
+
+      a { color: inherit; }
+
+      .mono {
+        font-family: var(--mono);
+        font-size: 13px;
+        letter-spacing: 0.01em;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* ------------------------------------------------------------- rail */
+
+      .rail {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: var(--rail);
+        display: flex;
+        flex-direction: column;
+        background: var(--panel);
+        border-right: 1px solid var(--rule);
+        padding: 18px 20px 14px;
+        gap: 13px;
+        overflow-y: auto;
+        z-index: 5;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+
+      .mark {
+        display: grid;
+        grid-template-columns: repeat(2, 7px);
+        grid-template-rows: repeat(2, 7px);
+        gap: 1px;
+      }
+      .mark i { display: block; border-radius: 1px; }
+      .mark i:nth-child(1) { background: var(--r); }
+      .mark i:nth-child(2) { background: var(--g); }
+      .mark i:nth-child(3) { background: var(--g); }
+      .mark i:nth-child(4) { background: var(--b); }
+
+      .group { display: grid; gap: 9px; }
+
+      .group > h2 {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--mute);
+        letter-spacing: 0.02em;
+      }
+
+      .ctl { display: grid; gap: 4px; }
+
+      .ctl-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 12.5px;
+        color: var(--dim);
+      }
+
+      .ctl-row output {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 16px;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        height: 3px;
+        border-radius: 2px;
+        background: var(--rule-2);
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 9px;
+        height: 15px;
+        margin-top: -6px;
+        border-radius: 2px;
+        background: var(--ink);
+        border: 0;
+      }
+      input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+      select {
+        width: 100%;
+        height: 30px;
+        padding: 0 8px;
+        color: var(--ink);
+        background: var(--panel-2);
+        border: 1px solid var(--rule-2);
+        border-radius: 4px;
+        font: 12.5px var(--sans);
+      }
+
+      .live {
+        margin-top: auto;
+        display: grid;
+        gap: 1px;
+        border-top: 1px solid var(--rule);
+        padding-top: 14px;
+      }
+
+      .live h2 {
+        margin: 0 0 6px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--mute);
+      }
+
+      .live div {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 4px 0;
+        font-size: 12px;
+        color: var(--dim);
+        border-bottom: 1px solid var(--rule);
+      }
+      .live div:last-child { border-bottom: 0; }
+      .live span {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .rail-note {
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--mute);
+      }
+
+      /* -------------------------------------------------------------- page */
+
+      .page {
+        margin-left: var(--rail);
+        padding: 0 var(--pad) 96px;
+        max-width: calc(var(--rail) + 1180px);
+      }
+
+      .cover {
+        padding: 64px 0 40px;
+        display: grid;
+        grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
+        gap: 40px;
+        align-items: end;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(34px, 3.6vw, 52px);
+        line-height: 1.03;
+        font-weight: 500;
+        letter-spacing: -0.03em;
+        max-width: 15ch;
+      }
+
+      .cover p {
+        margin: 0;
+        color: var(--dim);
+        max-width: 46ch;
+      }
+      .cover p + p { margin-top: 12px; }
+
+      .section {
+        padding-top: 56px;
+      }
+
+      /* The last section is a print on paper: the one place the page changes
+         ground, because that is what the whole pipeline exists to produce. */
+      .section.paper {
+        margin: 72px 0 0;
+        padding: 40px 36px 36px;
+        background: #efebe0;
+        color: #16150f;
+        border-radius: 3px;
+      }
+      .section.paper .head { border-bottom-color: rgba(22, 21, 15, 0.24); }
+      .section.paper .head .num,
+      .section.paper .head p { color: #5d5849; }
+      .section.paper .body { padding-left: 88px; }
+      .section.paper .plate { background: #16150f; border-color: rgba(22, 21, 15, 0.35); }
+      .section.paper .plate::before,
+      .section.paper .plate::after { border-color: rgba(239, 235, 224, 0.5); }
+      .section.paper .caption { color: #5d5849; }
+      .section.paper .treatment {
+        color: #3f3b30;
+        background: #f7f4ec;
+        border-color: rgba(22, 21, 15, 0.28);
+      }
+      .section.paper .treatment[aria-pressed="true"] {
+        color: #16150f;
+        border-color: #16150f;
+        box-shadow: inset 0 0 0 1px #16150f;
+        background: #f7f4ec;
+      }
+      .section.paper p { color: #3f3b30; }
+      .section.paper .tag { background: rgba(239, 235, 224, 0.92); border-color: rgba(22, 21, 15, 0.3); color: #16150f; }
+
+      .head {
+        display: grid;
+        grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1.05fr);
+        gap: 8px 24px;
+        align-items: baseline;
+        padding-bottom: 22px;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .head .num {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--mute);
+        font-variant-numeric: tabular-nums;
+        padding-top: 6px;
+      }
+
+      .head h2 {
+        margin: 0;
+        font-size: 25px;
+        line-height: 1.2;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+      }
+
+      .head p {
+        margin: 0;
+        color: var(--dim);
+        font-size: 14.5px;
+      }
+
+      .body { padding: 26px 0 0 88px; display: grid; gap: 26px; }
+
+      /* ------------------------------------------------------------ plates */
+
+      .plate {
+        position: relative;
+        background: var(--panel);
+        border: 1px solid var(--rule);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .plate::before,
+      .plate::after {
+        content: "";
+        position: absolute;
+        width: 9px;
+        height: 9px;
+        border: 1px solid var(--rule-2);
+        pointer-events: none;
+      }
+      .plate::before { left: 8px; top: 8px; border-right: 0; border-bottom: 0; }
+      .plate::after { right: 8px; bottom: 8px; border-left: 0; border-top: 0; }
+
+      .plate img { width: 100%; }
+
+      .plate.night { background: #08090a; }
+
+      .caption {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 10px 2px 0;
+        color: var(--mute);
+        font-family: var(--mono);
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .split-wrap { position: relative; }
+      .split-wrap img + img {
+        position: absolute;
+        inset: 0;
+        clip-path: inset(0 0 0 50%);
+      }
+      .split-wrap .seam {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: var(--ink);
+        opacity: 0.85;
+      }
+      .split-wrap .seam::after {
+        content: "";
+        position: absolute;
+        left: -8px;
+        top: 50%;
+        width: 17px;
+        height: 26px;
+        margin-top: -13px;
+        background: var(--ink);
+        border-radius: 2px;
+      }
+
+      .tag {
+        position: absolute;
+        top: 12px;
+        padding: 3px 7px;
+        border-radius: 3px;
+        background: rgba(12, 13, 15, 0.86);
+        border: 1px solid var(--rule-2);
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--ink);
+      }
+      .tag.l { left: 12px; }
+      .tag.r { right: 12px; }
+
+      .prose { max-width: 62ch; color: var(--dim); display: grid; gap: 14px; }
+      .prose strong { color: var(--ink); font-weight: 500; }
+      .prose p { margin: 0; }
+
+      /* ------------------------------------------------------------ layers */
+
+      .legend {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+        border-top: 1px solid var(--rule);
+        padding-top: 16px;
+      }
+      .legend div { display: grid; gap: 4px; }
+      .legend b {
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--mute);
+      }
+      .legend span { font-size: 13px; color: var(--dim); }
+
+      /* ------------------------------------------------------------ filters */
+
+      .filters {
+        display: grid;
+        grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+        gap: 36px;
+        align-items: start;
+      }
+
+      .grid6 {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        border: 1px solid var(--rule-2);
+      }
+      .site {
+        aspect-ratio: 1;
+        display: grid;
+        place-items: center;
+        font: 600 13px var(--mono);
+        color: #0c0d0f;
+        border-right: 1px solid var(--bg);
+        border-bottom: 1px solid var(--bg);
+      }
+      .site.r { background: var(--r); }
+      .site.g { background: var(--g); }
+      .site.b { background: var(--b); }
+
+      .counts { display: grid; gap: 10px; }
+      .counts div {
+        display: grid;
+        grid-template-columns: 12px 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--rule);
+      }
+      .counts i { width: 10px; height: 10px; border-radius: 2px; }
+      .counts span { font-size: 13px; color: var(--dim); }
+      .counts b {
+        font-family: var(--mono);
+        font-size: 15px;
+        font-weight: 400;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* -------------------------------------------------------------- guess */
+
+      .guess {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+        gap: 32px;
+        align-items: start;
+      }
+
+      table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+      caption { text-align: left; color: var(--mute); font-family: var(--mono); font-size: 12px; padding-bottom: 10px; }
+      th {
+        text-align: left;
+        font-weight: 500;
+        font-size: 12px;
+        color: var(--mute);
+        padding: 0 0 8px;
+        border-bottom: 1px solid var(--rule-2);
+      }
+      th.r, td.r { text-align: right; font-variant-numeric: tabular-nums; }
+      td {
+        padding: 11px 0;
+        border-bottom: 1px solid var(--rule);
+        color: var(--dim);
+      }
+      td.r { font-family: var(--mono); font-size: 12.5px; color: var(--ink); }
+      tr.on td { color: var(--ink); }
+      tr.on td:first-child::before {
+        content: "";
+        display: inline-block;
+        width: 5px;
+        height: 5px;
+        margin-right: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        vertical-align: 2px;
+      }
+      .bar { display: inline-block; height: 3px; background: var(--rule-2); vertical-align: 3px; margin-right: 10px; }
+      tr.on .bar { background: var(--accent); }
+
+      .faults { display: grid; gap: 12px; margin: 0; }
+      .faults div { display: grid; gap: 2px; }
+      .faults dt { font-size: 13px; color: var(--ink); }
+      .faults dd { margin: 0; font-size: 13px; color: var(--mute); }
+
+      /* ------------------------------------------------------------ numbers */
+
+      .readrow {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        border-top: 1px solid var(--rule-2);
+        border-bottom: 1px solid var(--rule);
+      }
+      .readrow div { padding: 14px 18px 16px 0; border-right: 1px solid var(--rule); }
+      .readrow div:last-child { border-right: 0; }
+      .readrow dt { font-size: 12px; color: var(--mute); }
+      .readrow dd {
+        margin: 4px 0 0;
+        font: 400 26px var(--mono);
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+      }
+      .readrow dd small { font-size: 12px; color: var(--mute); margin-left: 4px; }
+
+      .explain {
+        border: 1px solid var(--rule);
+        border-radius: 3px;
+        background: var(--panel);
+      }
+      .explain-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--rule);
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .explain-body { padding: 16px; display: grid; gap: 18px; }
+      .explain-body > p { margin: 0; }
+      .chans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+      .chan { border-top: 1px solid var(--rule-2); padding-top: 10px; }
+      .chan h3 {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 0 0 6px;
+        font-size: 12.5px;
+        font-weight: 400;
+        color: var(--dim);
+      }
+      .chan h3 i { width: 8px; height: 8px; border-radius: 2px; }
+      .chan .val {
+        font: 400 22px var(--mono);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.01em;
+      }
+      .chan .val small { font-size: 12px; color: var(--mute); margin-left: 5px; }
+      .chan p { margin: 6px 0 0; font-size: 12.5px; color: var(--mute); }
+
+      /* -------------------------------------------------------------- print */
+
+      .print { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+      .treatments { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .treatment {
+        padding: 9px 11px;
+        text-align: left;
+        font: 13px var(--sans);
+        color: var(--dim);
+        background: var(--panel-2);
+        border: 1px solid var(--rule-2);
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .treatment[aria-pressed="true"] {
+        color: var(--ink);
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent);
+      }
+
+      .foot {
+        margin-top: 72px;
+        padding-top: 18px;
+        border-top: 1px solid var(--rule);
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        color: var(--mute);
+        font-size: 12px;
+      }
+
+      /* ----------------------------------------------------------- responsive */
+
+      @media (max-width: 1100px) {
+        :root { --rail: 0px; --pad: 28px; }
+        .rail {
+          position: static;
+          width: auto;
+          border-right: 0;
+          border-bottom: 1px solid var(--rule);
+          flex-direction: row;
+          flex-wrap: wrap;
+          gap: 16px 24px;
+          align-items: flex-start;
+        }
+        .rail .brand { width: 100%; }
+        .group { flex: 1 1 190px; }
+        .live, .rail-note { display: none; }
+        .page { margin-left: 0; }
+        .cover { grid-template-columns: minmax(0, 1fr); gap: 20px; padding-top: 40px; }
+      }
+
+      @media (max-width: 760px) {
+        :root { --pad: 20px; }
+        .head { grid-template-columns: 40px minmax(0, 1fr); }
+        .head p { grid-column: 2; }
+        .body { padding-left: 0; }
+        .filters, .guess, .print, .cover { grid-template-columns: minmax(0, 1fr); }
+        /* On a phone the rail would eat the first screen; the controls come back
+           as the strip at the bottom of the real build. */
+        .rail { display: none; }
+        .rail .brand { flex: 0 0 100%; padding-bottom: 4px; }
+        .rail .group { flex: 0 0 auto; min-width: 168px; }
+        .rail .ctl { min-width: 150px; }
+        .rail .group:nth-of-type(3) { display: none; }
+        .rail .group:nth-of-type(1) .ctl:nth-child(4),
+        .rail .group:nth-of-type(1) .ctl:nth-child(5) { display: none; }
+        .readrow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .readrow div:nth-child(2) { border-right: 0; }
+        .chans { grid-template-columns: minmax(0, 1fr); }
+        .legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid6 { max-width: 320px; }
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="rail">
+      <div class="brand">
+        <span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        The Mosaic
+      </div>
+
+      <div class="group">
+        <h2>Light</h2>
+        <label class="ctl">
+          <span class="ctl-row"><span>Light level</span><output>40%</output></span>
+          <input type="range" min="2" max="100" value="40" aria-label="Light level" />
+        </label>
+        <label class="ctl">
+          <span class="ctl-row"><span>Shutter</span><output>1/60 s</output></span>
+          <input type="range" min="0" max="10" value="4" aria-label="Shutter" />
+        </label>
+        <label class="ctl">
+          <span class="ctl-row"><span>ISO</span><output>100</output></span>
+          <input type="range" min="0" max="6" value="0" aria-label="ISO" />
+        </label>
+        <label class="ctl">
+          <span class="ctl-row"><span>Aperture</span><output>f/2.8</output></span>
+          <input type="range" min="0" max="5" value="0" aria-label="Aperture" />
+        </label>
+      </div>
+
+      <div class="group">
+        <h2>The guess</h2>
+        <label class="ctl">
+          <span class="ctl-row"><span>Scene</span></span>
+          <select aria-label="Scene">
+            <option>Photograph</option>
+          </select>
+        </label>
+        <label class="ctl">
+          <span class="ctl-row"><span>Demosaic</span></span>
+          <select aria-label="Demosaic">
+            <option>Hamilton-Adams</option>
+          </select>
+        </label>
+        <label class="ctl">
+          <span class="ctl-row"><span>Which green</span></span>
+          <select aria-label="Which green">
+            <option>Compare both</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="group">
+        <h2>Numbers</h2>
+        <label class="ctl">
+          <span class="ctl-row"><span>Lens blur</span><output>σ 0.6 px</output></span>
+          <input type="range" min="0" max="30" value="6" aria-label="Lens blur" />
+        </label>
+        <label class="ctl">
+          <span class="ctl-row"><span>White balance</span><output>on</output></span>
+          <input type="range" min="0" max="1" value="1" aria-label="White balance" />
+        </label>
+      </div>
+
+      <div class="live">
+        <h2>This frame</h2>
+        <div><span class="k">Signal to noise</span><span>28.0 dB</span></div>
+        <div><span class="k">Signal per site</span><span>1112 e⁻</span></div>
+        <div><span class="k">Blown out</span><span>0.0 %</span></div>
+      </div>
+    </aside>
+
+    <main class="page">
+      <section class="cover">
+        <h1>A camera only measures one colour per pixel</h1>
+        <div>
+          <p>
+            A sensor is a grid of tiny spots called sites. Each site sits under one
+            colour filter, so it counts one colour only.
+          </p>
+          <p>
+            A pixel is the dot in the finished photo. Two of its three colour numbers
+            were never measured — software guesses them.
+          </p>
+          <p class="mono" style="color: var(--mute); margin-top: 18px">
+            PSNR 41.5 dB is the guess score: how close the guess is to the real
+            picture, higher is better. SNR 28.0 dB is the signal score: how far the
+            signal sits above the noise.
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="head">
+          <div class="num">01</div>
+          <h2>The frame</h2>
+          <p>
+            Left: the numbers the sensor recorded. Right: the photo the camera built
+            from them. Drag the divider, or use the arrow keys. Click a pixel to see
+            its numbers.
+          </p>
+        </div>
+        <div class="body">
+          <div class="plate split-wrap">
+            <img src="assets/raw.png" alt="The raw mosaic: one colour per site" />
+            <img src="assets/photo.png" alt="The finished photograph" />
+            <span class="seam"></span>
+            <span class="tag l">sensor</span>
+            <span class="tag r">photo</span>
+          </div>
+          <div class="caption">
+            <span>384 × 216 sites · 12 bit each, so 0 to 4095</span>
+            <span>frame 1 · Hamilton-Adams</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="head">
+          <div class="num">02</div>
+          <h2>Four layers above every pixel</h2>
+          <p>
+            Start with one site. Light passes a microlens, which gathers it. Then a
+            colour filter, which keeps one colour. Then a photodiode, which counts the
+            electrons that land. Then a circuit, which reads the count.
+          </p>
+        </div>
+        <div class="body">
+          <div class="plate night">
+            <img src="assets/stack.png" alt="A 24 by 24 patch of the sensor, pulled into four layers" />
+          </div>
+          <div class="legend">
+            <div><b>01</b><span>Microlens — gathers light</span></div>
+            <div><b>02</b><span>Colour filter — keeps one colour</span></div>
+            <div><b>03</b><span>Photodiode — counts electrons</span></div>
+            <div><b>04</b><span>Circuit — reads the count</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="head">
+          <div class="num">03</div>
+          <h2>One colour per pixel</h2>
+          <p>
+            Each site has one filter, so it records one colour. The filters repeat
+            every two sites: red, green, green, blue. Half of them are green, because
+            your eye reads green detail best.
+          </p>
+        </div>
+        <div class="body">
+          <div class="filters">
+            <div class="grid6">
+              <span class="site r">R</span><span class="site g">G</span><span class="site r">R</span><span class="site g">G</span><span class="site r">R</span><span class="site g">G</span>
+              <span class="site g">G</span><span class="site b">B</span><span class="site g">G</span><span class="site b">B</span><span class="site g">G</span><span class="site b">B</span>
+              <span class="site r">R</span><span class="site g">G</span><span class="site r">R</span><span class="site g">G</span><span class="site r">R</span><span class="site g">G</span>
+              <span class="site g">G</span><span class="site b">B</span><span class="site g">G</span><span class="site b">B</span><span class="site g">G</span><span class="site b">B</span>
+              <span class="site r">R</span><span class="site g">G</span><span class="site r">R</span><span class="site g">G</span><span class="site r">R</span><span class="site g">G</span>
+              <span class="site g">G</span><span class="site b">B</span><span class="site g">G</span><span class="site b">B</span><span class="site g">G</span><span class="site b">B</span>
+            </div>
+            <div>
+              <div class="counts">
+                <div><i style="background: var(--r)"></i><span>red sites</span><b>25%</b></div>
+                <div><i style="background: var(--g)"></i><span>green sites</span><b>50%</b></div>
+                <div><i style="background: var(--b)"></i><span>blue sites</span><b>25%</b></div>
+              </div>
+              <div class="prose" style="margin-top: 22px">
+                <p>
+                  A red site never records green or blue. Those two numbers aren't
+                  stored somewhere else in the file — they were never there.
+                </p>
+                <p>
+                  So the camera fills each missing colour from the neighbours it does
+                  have. That's a guess. The next section is about how the guess is
+                  made.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="head">
+          <div class="num">04</div>
+          <h2>The missing green</h2>
+          <p>
+            A red or blue site has no green reading. Its two green neighbours — one
+            along the row, one down the column — are all the evidence there is. Pick
+            one and see which answer lands closer.
+          </p>
+        </div>
+        <div class="body">
+          <div class="guess">
+            <div>
+              <div class="plate">
+                <img src="assets/errorc.png" alt="Error map of this frame in levels" />
+              </div>
+              <div class="caption">
+                <span>Error map, in levels</span>
+                <span>0 to 13 · mean 1.65</span>
+              </div>
+            </div>
+            <div>
+              <table>
+                <caption>Reconstruction quality per method</caption>
+                <thead>
+                  <tr><th>Method</th><th class="r">PSNR</th><th class="r">Colour error</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Nearest neighbour</td><td class="r">36.98 dB</td><td class="r">2.98</td></tr>
+                  <tr><td>Bilinear</td><td class="r"><span class="bar" style="width: 42px"></span>41.26 dB</td><td class="r">2.01</td></tr>
+                  <tr class="on"><td>Hamilton–Adams</td><td class="r"><span class="bar" style="width: 48px"></span>41.54 dB</td><td class="r">1.30</td></tr>
+                  <tr><td>Malvar–He–Cutler</td><td class="r"><span class="bar" style="width: 50px"></span>41.65 dB</td><td class="r">1.40</td></tr>
+                </tbody>
+              </table>
+              <p class="mono" style="color: var(--mute); margin: 12px 0 22px">
+                Hamilton–Adams: 41.54 dB on this frame. Highest wins; the bars are
+                ranked, not absolute.
+              </p>
+              <dl class="faults">
+                <div><dt>Nearest neighbour</dt><dd>Copies the closest site that measured the colour, so edges look like a zip.</dd></div>
+                <div><dt>Bilinear</dt><dd>Averages the neighbours, so diagonal edges smear.</dd></div>
+                <div><dt>Hamilton–Adams</dt><dd>Picks one direction first, so a near-horizontal edge can staircase.</dd></div>
+                <div><dt>Malvar–He–Cutler</dt><dd>Bilinear plus a sharpening step, so fine colour bleeds.</dd></div>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="head">
+          <div class="num">05</div>
+          <h2>One pixel, in numbers</h2>
+          <p>
+            Click any pixel in the frame at the top. You'll see what the engine had for
+            that site: the one colour it measured, the two it guessed, and the
+            arithmetic behind each.
+          </p>
+        </div>
+        <div class="body">
+          <dl class="readrow" style="margin: 0">
+            <div><dt>PSNR</dt><dd>41.5<small>dB</small></dd></div>
+            <div><dt>Colour error</dt><dd>1.30<small>DN</small></dd></div>
+            <div><dt>Filter split</dt><dd style="font-size: 20px">25% · 50% · 25%</dd></div>
+            <div><dt>Compute time</dt><dd>213<small>ms</small></dd></div>
+          </dl>
+
+          <div class="explain">
+            <div class="explain-head">
+              <span>At the selected site</span>
+              <span>Showing the centre of the frame. Click another pixel to move it.</span>
+            </div>
+            <div class="explain-body">
+              <p>This site counted red only: 1282. The camera guessed green (1582) and blue (1672).</p>
+              <p class="mono" style="color: var(--mute)">Row 108, column 192 · Hamilton–Adams</p>
+              <div class="chans">
+                <div class="chan">
+                  <h3><i style="background: var(--r)"></i>red · measured</h3>
+                  <div class="val">1282<small>DN</small></div>
+                  <p>Measured at this site.</p>
+                </div>
+                <div class="chan">
+                  <h3><i style="background: var(--g)"></i>green · guessed</h3>
+                  <div class="val">1582<small>DN</small></div>
+                  <p>The row changes less, so the row pair is used.</p>
+                  <p>Change along the row 160. Change down the column 408.</p>
+                </div>
+                <div class="chan">
+                  <h3><i style="background: var(--b)"></i>blue · guessed</h3>
+                  <div class="val">1672<small>DN</small></div>
+                  <p>Green, plus the average colour difference from four diagonal neighbours.</p>
+                </div>
+              </div>
+              <p class="mono" style="color: var(--mute); margin: 0">
+                The values are levels, written DN. One level is one step on a scale that
+                runs from 0 to 4095.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section paper">
+        <div class="head">
+          <div class="num">06</div>
+          <h2>Eight ways to print one frame</h2>
+          <p>
+            Those numbers aren't a picture yet. Printing is how they become one.
+            Expose freezes the frame. The measurements don't change; only the print
+            does.
+          </p>
+        </div>
+        <div class="body">
+          <div class="print">
+            <div>
+              <div class="plate">
+                <img src="assets/printc.png" alt="The printed frame" />
+                <span class="tag l">live</span>
+              </div>
+              <div class="caption">
+                <span>Live. The frame follows the controls in the rail.</span>
+              </div>
+            </div>
+            <div>
+              <p style="margin: 0 0 12px">
+                Each treatment stands in for a real choice of paper, toner or developer
+                strength.
+              </p>
+              <div class="treatments">
+                <button class="treatment" aria-pressed="true">straight print</button>
+                <button class="treatment" aria-pressed="false">hard paper</button>
+                <button class="treatment" aria-pressed="false">sepia toned</button>
+                <button class="treatment" aria-pressed="false">cyanotype</button>
+                <button class="treatment" aria-pressed="false">negative</button>
+                <button class="treatment" aria-pressed="false">solarise</button>
+                <button class="treatment" aria-pressed="false">lith print</button>
+                <button class="treatment" aria-pressed="false">split tone</button>
+              </div>
+              <p style="margin: 14px 0 0; font-size: 13.5px">
+                The frame as the engine made it. Nothing added. Every other treatment
+                changes the print, not the photo.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="foot">
+        <span>Computed in this browser in 213 ms · 384×216 pixels</span>
+        <span>Nothing leaves this device.</span>
+      </footer>
+    </main>
+  </body>
+</html>
